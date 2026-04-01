@@ -1,0 +1,47 @@
+# Root ignore rules for LMU_Telemetry_STM32
+# Goal: keep source, project files, and build scripts;
+# ignore generated outputs, user-specific IDE state, logs, and temp files.
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Keil MDK user-specific files
+*.uvguix.*
+*.bak
+
+# Visual Studio / MSVC generated files
+*.ilk
+*.idb
+*.ipdb
+*.iobj
+*.pdb
+*.pch
+*.log
+*.tlog
+*.lastbuildstate
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.ncb
+*.opensdf
+*.sdf
+
+# Generated logs
+LMU_Telemetry_Output.txt
+ExampleInternalsGraphicsOutput.txt
+
+# Build / generated directories
+LMU_Dash_F407/Output/
+rF2_telemetry_plugin/build/
+rF2_telemetry_plugin/VC11/
+
+# Optional broad generated folders if they appear later
+**/Debug/
+**/Release/
+**/x64/
+**/x86/
