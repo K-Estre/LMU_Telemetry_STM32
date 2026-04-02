@@ -96,6 +96,7 @@ extern volatile uart_telemetry_t g_uart_telemetry;
 
 
 void usart_init(uint32_t baudrate);             /* ���ڳ�ʼ������ */
+uint8_t uart_telemetry_fetch(uart_telemetry_t *out);
 
 #endif
 

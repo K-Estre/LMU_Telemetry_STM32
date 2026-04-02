@@ -31,6 +31,7 @@
 
 #include "stdlib.h"
 #include "./SYSTEM/sys/sys.h"
+#include "./SYSTEM/usart/usart.h"
 
 
 /******************************************************************************************/
@@ -111,6 +112,30 @@ typedef struct
     volatile uint16_t LCD_REG;
     volatile uint16_t LCD_RAM;
 } LCD_TypeDef;
+
+typedef struct
+{
+    int gear;
+    int rpm;
+    int speed;
+    int tire_temp_fl;
+    int tire_temp_fr;
+    int tire_temp_rl;
+    int tire_temp_rr;
+    int brake_temp_fl;
+    int brake_temp_fr;
+    int brake_temp_rl;
+    int brake_temp_rr;
+    int water_temp;
+    int oil_temp;
+    long best_lap_ms;
+    long current_lap_ms;
+    int fuel_liters;
+    int fuel_pct;
+    int rpm_pct_x10;
+    int throttle_pct;
+    int brake_pct;
+} dashboard_view_state_t;
 
 
 /* LCD_BASE����ϸ���㷽��:
@@ -248,6 +273,8 @@ void lcd_draw_lmh_tire_temps(int fl, int fr, int rl, int rr);                   
 void lcd_draw_lmh_lap_times(uint32_t current_lap_ms, uint32_t best_lap_ms);                                     /* ����LMHȦ�� */
 void lcd_draw_lmh_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct);                                           /* ����LMHȼ�� */
 void lcd_draw_lmh_shift_lights(uint16_t rpm_pct_x10);                                                           /* ����LMHת�Ƶ� */
+void dashboard_init_screen(void);
+void dashboard_update(const uart_telemetry_t *telemetry, dashboard_view_state_t *state);
 void lcd_draw_bold_digit(uint16_t x, uint16_t y, char digit, uint16_t width, uint16_t height, uint16_t color);      /* ����ڰ���ʽ���� */
 void lcd_draw_bold_number(uint16_t x, uint16_t y, char *str, uint16_t digit_width, uint16_t digit_height, uint16_t spacing, uint16_t color); /* ����ڰ���ʽ�����ַ��� */
 void lcd_draw_bold_int(uint16_t x, uint16_t y, int32_t num, uint16_t digit_width, uint16_t digit_height, uint16_t spacing, uint16_t color);      /* ����ڰ���ʽ��ʾ���� */

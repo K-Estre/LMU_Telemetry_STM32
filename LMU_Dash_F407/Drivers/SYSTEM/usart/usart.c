@@ -248,6 +248,21 @@ void usart_init(uint32_t baudrate)
     HAL_UART_Receive_IT(&g_uart1_handle, (uint8_t *)g_rx_buffer, RXBUFFERSIZE);
 }
 
+uint8_t uart_telemetry_fetch(uart_telemetry_t *out)
+{
+    if ((out == NULL) || (g_uart_frame_ready == 0))
+    {
+        return 0;
+    }
+
+    __disable_irq();
+    memcpy(out, (const void *)&g_uart_telemetry, sizeof(uart_telemetry_t));
+    g_uart_frame_ready = 0;
+    __enable_irq();
+
+    return 1;
+}
+
 /**
  * @brief       UART�ײ��ʼ������
  * @param       huart: UART�������ָ��

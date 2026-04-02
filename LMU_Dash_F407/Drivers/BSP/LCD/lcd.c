@@ -1988,6 +1988,101 @@ void lcd_draw_lmh_center_values(int gear, int speed) {
   lcd_draw_lmh_speed(speed);
 }
 
+void dashboard_init_screen(void) {
+  g_point_color = BLUE;
+  lcd_draw_lmh_demo();
+  lcd_draw_lmh_shift_lights(0);
+  lcd_draw_lmh_gear(0);
+  lcd_draw_lmh_rpm(0);
+  lcd_draw_lmh_speed(0);
+  lcd_draw_lmh_brake_temps(0, 0, 0, 0);
+  lcd_draw_lmh_tire_temps(0, 0, 0, 0);
+  lcd_draw_lmh_engine_temps(0, 0);
+  lcd_draw_lmh_lap_times(0, 0);
+  lcd_draw_lmh_fuel_status(0, 0);
+  lcd_draw_lmh_pedals(0, 0);
+}
+
+void dashboard_update(const uart_telemetry_t *telemetry,
+                      dashboard_view_state_t *state) {
+  if ((telemetry == NULL) || (state == NULL)) {
+    return;
+  }
+
+  if ((int)telemetry->gear != state->gear) {
+    lcd_draw_lmh_gear(telemetry->gear);
+    state->gear = telemetry->gear;
+  }
+
+  if ((int)telemetry->rpm_pct_x10 != state->rpm_pct_x10) {
+    lcd_draw_lmh_shift_lights(telemetry->rpm_pct_x10);
+    state->rpm_pct_x10 = telemetry->rpm_pct_x10;
+  }
+
+  if ((int)telemetry->rpm != state->rpm) {
+    lcd_draw_lmh_rpm(telemetry->rpm);
+    state->rpm = telemetry->rpm;
+  }
+
+  if ((int)telemetry->speed != state->speed) {
+    lcd_draw_lmh_speed(telemetry->speed);
+    state->speed = telemetry->speed;
+  }
+
+  if (((int)telemetry->brake_temp_fl != state->brake_temp_fl) ||
+      ((int)telemetry->brake_temp_fr != state->brake_temp_fr) ||
+      ((int)telemetry->brake_temp_rl != state->brake_temp_rl) ||
+      ((int)telemetry->brake_temp_rr != state->brake_temp_rr)) {
+    lcd_draw_lmh_brake_temps(
+        telemetry->brake_temp_fl, telemetry->brake_temp_fr,
+        telemetry->brake_temp_rl, telemetry->brake_temp_rr);
+    state->brake_temp_fl = telemetry->brake_temp_fl;
+    state->brake_temp_fr = telemetry->brake_temp_fr;
+    state->brake_temp_rl = telemetry->brake_temp_rl;
+    state->brake_temp_rr = telemetry->brake_temp_rr;
+  }
+
+  if (((int)telemetry->tire_temp_fl != state->tire_temp_fl) ||
+      ((int)telemetry->tire_temp_fr != state->tire_temp_fr) ||
+      ((int)telemetry->tire_temp_rl != state->tire_temp_rl) ||
+      ((int)telemetry->tire_temp_rr != state->tire_temp_rr)) {
+    lcd_draw_lmh_tire_temps(telemetry->tire_temp_fl, telemetry->tire_temp_fr,
+                            telemetry->tire_temp_rl, telemetry->tire_temp_rr);
+    state->tire_temp_fl = telemetry->tire_temp_fl;
+    state->tire_temp_fr = telemetry->tire_temp_fr;
+    state->tire_temp_rl = telemetry->tire_temp_rl;
+    state->tire_temp_rr = telemetry->tire_temp_rr;
+  }
+
+  if (((int)telemetry->water_temp != state->water_temp) ||
+      ((int)telemetry->oil_temp != state->oil_temp)) {
+    lcd_draw_lmh_engine_temps(telemetry->water_temp, telemetry->oil_temp);
+    state->water_temp = telemetry->water_temp;
+    state->oil_temp = telemetry->oil_temp;
+  }
+
+  if (((long)telemetry->best_lap_ms != state->best_lap_ms) ||
+      ((long)telemetry->current_lap_ms != state->current_lap_ms)) {
+    lcd_draw_lmh_lap_times(telemetry->current_lap_ms, telemetry->best_lap_ms);
+    state->best_lap_ms = telemetry->best_lap_ms;
+    state->current_lap_ms = telemetry->current_lap_ms;
+  }
+
+  if (((int)telemetry->fuel_liters != state->fuel_liters) ||
+      ((int)telemetry->fuel_pct != state->fuel_pct)) {
+    lcd_draw_lmh_fuel_status(telemetry->fuel_liters, telemetry->fuel_pct);
+    state->fuel_liters = telemetry->fuel_liters;
+    state->fuel_pct = telemetry->fuel_pct;
+  }
+
+  if (((int)telemetry->throttle_pct != state->throttle_pct) ||
+      ((int)telemetry->brake_pct != state->brake_pct)) {
+    lcd_draw_lmh_pedals(telemetry->throttle_pct, telemetry->brake_pct);
+    state->throttle_pct = telemetry->throttle_pct;
+    state->brake_pct = telemetry->brake_pct;
+  }
+}
+
 void lcd_draw_lmh_rpm(int rpm) {
   lcd_compose_bold_int_rect(104, 24, rpm, 13, 19, 0, g_lmh_rpm_color,
                             g_lmh_center_bg, g_lmh_rect_buf);
