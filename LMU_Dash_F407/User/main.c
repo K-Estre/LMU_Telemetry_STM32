@@ -1,6 +1,5 @@
 #include "./BSP/LCD/lcd.h"
-#include "./BSP/LED/led.h"
-#include "./SYSTEM/delay/delay.h"
+// #include "./SYSTEM/delay/delay.h"
 #include "./SYSTEM/sys/sys.h"
 #include "./SYSTEM/usart/usart.h"
 
@@ -16,7 +15,6 @@ int main(void) {
   sys_stm32_clock_init(336, 8, 2, 7);
   delay_init(168);
   usart_init(115200);
-  led_init();
   lcd_init();
   dashboard_init_screen();
 

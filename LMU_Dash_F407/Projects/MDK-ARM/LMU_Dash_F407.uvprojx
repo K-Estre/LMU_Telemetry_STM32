@@ -504,24 +504,9 @@
           <GroupName>Drivers/BSP</GroupName>
           <Files>
             <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\Drivers\BSP\LED\led.c</FilePath>
-            </File>
-            <File>
               <FileName>lcd.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\Drivers\BSP\LCD\lcd.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Readme</GroupName>
-          <Files>
-            <File>
-              <FileName>readme.txt</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\readme.txt</FilePath>
             </File>
           </Files>
         </Group>
@@ -546,3 +531,4 @@
   </LayerInfo>
 
 </Project>
+
