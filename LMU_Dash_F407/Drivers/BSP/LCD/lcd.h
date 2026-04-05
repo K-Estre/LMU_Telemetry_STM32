@@ -261,18 +261,18 @@ void lcd_show_char_scaled(uint16_t x, uint16_t y, char chr, uint8_t size, uint8_
 void lcd_show_string_scaled(uint16_t x, uint16_t y, char *p, uint8_t size, uint8_t scale, uint16_t color);                 /* ������ʾ�ַ��� */
 void lcd_show_char_scaled_bold(uint16_t x, uint16_t y, char chr, uint8_t size, uint8_t scale, uint16_t color);            /* �����Ӵ���ʾ�ַ� */
 void lcd_show_string_scaled_bold(uint16_t x, uint16_t y, char *p, uint8_t size, uint8_t scale, uint16_t color);           /* �����Ӵ���ʾ�ַ��� */
-void lcd_draw_lmh_demo(void);                                                                                     /* ����LMH�����沼�ֺ�ʾ�� */
-void lcd_draw_lmh_center_values(int gear, int speed);                                                            /* ����LMH�������м����� */
-void lcd_draw_lmh_gear(int gear);                                                                                /* ����LMH����λ */
-void lcd_draw_lmh_rpm(int rpm);                                                                                  /* ����LMHת�� */
-void lcd_draw_lmh_speed(int speed);                                                                              /* ����LMH�ٶ� */
-void lcd_draw_lmh_engine_temps(int water_temp, int oil_temp);                                                   /* ����LMHˮ��/���� */
-void lcd_draw_lmh_pedals(int throttle_pct, int brake_pct);                                                      /* ����LMH̤�� */
-void lcd_draw_lmh_brake_temps(int fl, int fr, int rl, int rr);                                                  /* ����LMH����ɲ��� */
-void lcd_draw_lmh_tire_temps(int fl, int fr, int rl, int rr);                                                   /* ����LMH����̥�� */
-void lcd_draw_lmh_lap_times(uint32_t current_lap_ms, uint32_t best_lap_ms);                                     /* ����LMHȦ�� */
-void lcd_draw_lmh_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct);                                           /* ����LMHȼ�� */
-void lcd_draw_lmh_shift_lights(uint16_t rpm_pct_x10);                                                           /* ����LMHת�Ƶ� */
+void lcd_draw_demo(void);                                                                                     /* ����LMH�����沼�ֺ�ʾ�� */
+void lcd_draw_center_values(int gear, int speed);                                                            /* ����LMH�������м����� */
+void lcd_draw_gear(int gear);                                                                                /* ����LMH����λ */
+void lcd_draw_rpm(int rpm);                                                                                  /* ����LMHת�� */
+void lcd_draw_speed(int speed);                                                                              /* ����LMH�ٶ� */
+void lcd_draw_engine_temps(int water_temp, int oil_temp);                                                   /* ����LMHˮ��/���� */
+void lcd_draw_pedals(int throttle_pct, int brake_pct);                                                      /* ����LMH̤�� */
+void lcd_draw_brake_temps(int fl, int fr, int rl, int rr);                                                  /* ����LMH����ɲ��� */
+void lcd_draw_tire_temps(int fl, int fr, int rl, int rr);                                                   /* ����LMH����̥�� */
+void lcd_draw_lap_times(uint32_t current_lap_ms, uint32_t best_lap_ms);                                     /* ����LMHȦ�� */
+void lcd_draw_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct);                                           /* ����LMHȼ�� */
+void lcd_draw_shift_lights(uint16_t rpm_pct_x10);                                                           /* ����LMHת�Ƶ� */
 void dashboard_init_screen(void);
 void dashboard_update(const uart_telemetry_t *telemetry, dashboard_view_state_t *state);
 void lcd_draw_bold_digit(uint16_t x, uint16_t y, char digit, uint16_t width, uint16_t height, uint16_t color);      /* ����ڰ���ʽ���� */
@@ -281,6 +281,7 @@ void lcd_draw_bold_int(uint16_t x, uint16_t y, int32_t num, uint16_t digit_width
 void lcd_draw_bold_int_in_rect(uint16_t x, uint16_t y, uint16_t rect_width, uint16_t rect_height, int32_t num, uint16_t digit_width, uint16_t digit_height, uint16_t spacing, uint16_t color); /* �����������о�����ʾ���� */
 
 #endif
+
 
 
 

@@ -1168,25 +1168,25 @@ void lcd_show_string_scaled_bold(uint16_t x, uint16_t y, char* p, uint8_t size,
 
 static uint8_t lcd_bold_int_strlen(const char* buf);
 static void lcd_bold_int_to_str(int32_t num, char* buf);
-static uint16_t g_lmh_rect_buf[104 * 96];
-static const uint16_t g_lmh_center_bg = WHITE;
-static const uint16_t g_lmh_gear_color = BLACK;
-static const uint16_t g_lmh_rpm_color = 0x52AA;
-static const uint16_t g_lmh_speed_color = 0x4208;
-static const uint16_t g_lmh_brake_temp_bg = 0x7C8F;
-static const uint16_t g_lmh_brake_temp_color = WHITE;
-static const uint16_t g_lmh_tire_bg = 0x85B9;
-static const uint16_t g_lmh_tire_color = WHITE;
-static const uint16_t g_lmh_bar_bg = 0x8410;
-static const uint16_t g_lmh_brake_color = 0xF800;
-static const uint16_t g_lmh_throttle_color = 0x07E0;
-static const uint16_t g_lmh_water_label_color = LIGHTBLUE;
-static const uint16_t g_lmh_oil_label_color = YELLOW;
-static const uint16_t g_lmh_lap_bg = 0x1A06;
-static const uint16_t g_lmh_fuel_bar_color = 0xFFE0;
-static const uint16_t g_lmh_shift_off_color = 0x3186;
-static const uint16_t g_lmh_shift_cyan_color = BLUE;
-static const unsigned char g_lmh_small_letter_l_mask
+static uint16_t g_dash_rect_buf[104 * 96];
+static const uint16_t g_dash_center_bg = WHITE;
+static const uint16_t g_dash_gear_color = BLACK;
+static const uint16_t g_dash_rpm_color = 0x52AA;
+static const uint16_t g_dash_speed_color = 0x4208;
+static const uint16_t g_dash_brake_temp_bg = 0x7C8F;
+static const uint16_t g_dash_brake_temp_color = WHITE;
+static const uint16_t g_dash_tire_bg = 0x85B9;
+static const uint16_t g_dash_tire_color = WHITE;
+static const uint16_t g_dash_bar_bg = 0x8410;
+static const uint16_t g_dash_brake_color = 0xF800;
+static const uint16_t g_dash_throttle_color = 0x07E0;
+static const uint16_t g_dash_water_label_color = LIGHTBLUE;
+static const uint16_t g_dash_oil_label_color = YELLOW;
+static const uint16_t g_dash_lap_bg = 0x1A06;
+static const uint16_t g_dash_fuel_bar_color = 0xFFE0;
+static const uint16_t g_dash_shift_off_color = 0x3186;
+static const uint16_t g_dash_shift_cyan_color = BLUE;
+static const unsigned char g_dash_small_letter_l_mask
     [SIMHEI_DIGIT_SMALL_WIDTH * SIMHEI_DIGIT_SMALL_HEIGHT] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1208,9 +1208,9 @@ static const unsigned char g_lmh_small_letter_l_mask
         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0};
 
-static void lcd_draw_lmh_pressure_badge(void);
-static void lcd_draw_lmh_temp_badge(void);
-static void lcd_draw_lmh_static_texts(void);
+static void lcd_draw_pressure_badge(void);
+static void lcd_draw_temp_badge(void);
+static void lcd_draw_static_texts(void);
 static uint8_t lcd_ascii_strlen(const char* str);
 static void lcd_format_lap_time(uint32_t lap_ms, char* buf);
 static uint16_t lcd_center_text_x(uint16_t region_x, uint16_t region_width,
@@ -1297,7 +1297,7 @@ static void lcd_draw_open_round_frame(uint16_t x1, uint16_t y1, uint16_t x2,
   }
 }
 
-void lcd_draw_lmh_demo(void) {
+void lcd_draw_demo(void) {
   uint16_t panel_light_green = 0x7C8F;
   uint16_t panel_light_blue = 0x85B9;
   uint16_t panel_dark_green = 0x1A06;
@@ -1309,7 +1309,7 @@ void lcd_draw_lmh_demo(void) {
 
   
   lcd_fill_round_rect(0, 24, 107, 103, 5, panel_light_green);
-  lcd_fill(108, 24, 211, 175, g_lmh_center_bg);
+  lcd_fill(108, 24, 211, 175, g_dash_center_bg);
   lcd_fill_round_rect(212, 24, 319, 103, 5, panel_light_blue);
   lcd_draw_round_frame(0, 104, 107, 175, 6, 3, line_blue, BLACK);
   lcd_draw_round_frame(212, 104, 319, 175, 6, 3, line_blue, panel_dark_green);
@@ -1317,21 +1317,21 @@ void lcd_draw_lmh_demo(void) {
   
   lcd_fill(6, 64, 101, 66, line_gray);
   lcd_fill(52, 29, 55, 100, line_gray);
-  lcd_draw_lmh_pressure_badge();
+  lcd_draw_pressure_badge();
   lcd_fill(6, 173, 101, 175, line_blue);
 
   lcd_fill(218, 64, 313, 66, line_gray);
   lcd_fill(265, 29, 267, 100, line_gray);
   lcd_fill(218, 173, 313, 175, line_blue);
-  lcd_draw_lmh_temp_badge();
+  lcd_draw_temp_badge();
 
   
   lcd_draw_open_round_frame(80, 176, 239, 239, 7, 3, line_green, BLACK, 1);
   lcd_fill(80, 183, 82, 239, line_green);
   lcd_fill(237, 183, 239, 239, line_green);
 
-  lcd_draw_lmh_center_values(0, 0);
-  lcd_draw_lmh_static_texts();
+  lcd_draw_center_values(0, 0);
+  lcd_draw_static_texts();
 }
 
 static void lcd_blit_rgb565_rect(uint16_t x, uint16_t y, uint16_t width,
@@ -1364,7 +1364,7 @@ static const unsigned char* lcd_get_digit_mask(char digit, uint16_t width,
 
   if ((width == SIMHEI_DIGIT_SMALL_WIDTH) &&
       (height == SIMHEI_DIGIT_SMALL_HEIGHT) && (digit == 'L')) {
-    return g_lmh_small_letter_l_mask;
+    return g_dash_small_letter_l_mask;
   }
 
   if ((digit < '0') || (digit > '9')) {
@@ -1686,34 +1686,34 @@ static void lcd_compose_bold_3digit_rect(uint16_t rect_width,
   }
 }
 
-static void lcd_draw_lmh_brake_temp_cell(uint16_t x, uint16_t y,
+static void lcd_draw_brake_temp_cell(uint16_t x, uint16_t y,
                                          uint16_t width, uint16_t height,
                                          int temp) {
   lcd_compose_bold_3digit_rect(width, height, temp,
                                SIMHEI_DIGIT_SMALL_WIDTH,
                                SIMHEI_DIGIT_SMALL_HEIGHT, 0,
-                               g_lmh_brake_temp_color, g_lmh_brake_temp_bg,
-                               g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(x, y, width, height, g_lmh_rect_buf);
+                               g_dash_brake_temp_color, g_dash_brake_temp_bg,
+                               g_dash_rect_buf);
+  lcd_blit_rgb565_rect(x, y, width, height, g_dash_rect_buf);
 }
 
-static void lcd_draw_lmh_pressure_badge(void) {
+static void lcd_draw_pressure_badge(void) {
   lcd_fill(47, 56, 60, 73, 0xC638);
   lcd_show_string_scaled_bold(50, 57, "B", 16, 1, BLACK);
 }
 
-static void lcd_draw_lmh_temp_badge(void) {
+static void lcd_draw_temp_badge(void) {
   lcd_fill(260, 56, 273, 73, 0xC638);
   lcd_show_string_scaled_bold(263, 57, "T", 16, 1, BLACK);
 }
 
-static void lcd_draw_lmh_static_texts(void) {
+static void lcd_draw_static_texts(void) {
   uint16_t tc_col0_center = 22;
   uint16_t tc_col1_center = 54;
   uint16_t tc_col2_center = 86;
 
-  lcd_show_string(19, 219, 8, 16, 16, "W", g_lmh_water_label_color);
-  lcd_show_string(51, 219, 8, 16, 16, "O", g_lmh_oil_label_color);
+  lcd_show_string(19, 219, 8, 16, 16, "W", g_dash_water_label_color);
+  lcd_show_string(51, 219, 8, 16, 16, "O", g_dash_oil_label_color);
 
   lcd_show_string(8, 110, 24, 12, 12, "TC L", 0x33FF);
   lcd_show_string(40, 110, 24, 12, 12, "TC C", 0xFD20);
@@ -1721,21 +1721,21 @@ static void lcd_draw_lmh_static_texts(void) {
 
   lcd_compose_bold_int_rect(24, 20, 7, SIMHEI_DIGIT_SMALL_WIDTH,
                             SIMHEI_DIGIT_SMALL_HEIGHT, 0, WHITE, BLACK,
-                            g_lmh_rect_buf);
+                            g_dash_rect_buf);
   lcd_blit_rgb565_rect((uint16_t)(tc_col0_center - 12), 124, 24, 20,
-                       g_lmh_rect_buf);
+                       g_dash_rect_buf);
 
   lcd_compose_bold_int_rect(24, 20, 8, SIMHEI_DIGIT_SMALL_WIDTH,
                             SIMHEI_DIGIT_SMALL_HEIGHT, 0, WHITE, BLACK,
-                            g_lmh_rect_buf);
+                            g_dash_rect_buf);
   lcd_blit_rgb565_rect((uint16_t)(tc_col1_center - 12), 124, 24, 20,
-                       g_lmh_rect_buf);
+                       g_dash_rect_buf);
 
   lcd_compose_bold_int_rect(24, 20, 7, SIMHEI_DIGIT_SMALL_WIDTH,
                             SIMHEI_DIGIT_SMALL_HEIGHT, 0, WHITE, BLACK,
-                            g_lmh_rect_buf);
+                            g_dash_rect_buf);
   lcd_blit_rgb565_rect((uint16_t)(tc_col2_center - 12), 124, 24, 20,
-                       g_lmh_rect_buf);
+                       g_dash_rect_buf);
 
   lcd_fill(14, 148, 94, 149, 0x4208);
 
@@ -1907,14 +1907,14 @@ static uint16_t lcd_get_shift_light_color(uint8_t index, uint16_t rpm_pct_x10) {
       0xF800, 0xF800, 0xF800, 0x07FF, 0x07FF};
 
   if (rpm_pct_x10 >= 940) {
-    return g_lmh_shift_cyan_color;
+    return g_dash_shift_cyan_color;
   }
 
   if ((index < 10) && (rpm_pct_x10 >= thresholds[index])) {
     return colors[index];
   }
 
-  return g_lmh_shift_off_color;
+  return g_dash_shift_off_color;
 }
 
 static void lcd_compose_vertical_bar_rect(uint16_t rect_width,
@@ -1972,35 +1972,35 @@ static void lcd_compose_bar_rect(uint16_t rect_width, uint16_t rect_height,
   }
 }
 
-static void lcd_draw_lmh_tire_temp_cell(uint16_t x, uint16_t y,
+static void lcd_draw_tire_temp_cell(uint16_t x, uint16_t y,
                                         uint16_t width, uint16_t height,
                                         int temp) {
   lcd_compose_bold_2digit_rect(width, height, temp, SIMHEI_DIGIT_SMALL_WIDTH,
                                SIMHEI_DIGIT_SMALL_HEIGHT, 0,
-                               g_lmh_tire_color, g_lmh_tire_bg,
-                               g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(x, y, width, height, g_lmh_rect_buf);
+                               g_dash_tire_color, g_dash_tire_bg,
+                               g_dash_rect_buf);
+  lcd_blit_rgb565_rect(x, y, width, height, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_center_values(int gear, int speed) {
-  lcd_draw_lmh_rpm(0);
-  lcd_draw_lmh_gear(gear);
-  lcd_draw_lmh_speed(speed);
+void lcd_draw_center_values(int gear, int speed) {
+  lcd_draw_rpm(0);
+  lcd_draw_gear(gear);
+  lcd_draw_speed(speed);
 }
 
 void dashboard_init_screen(void) {
   g_point_color = BLUE;
-  lcd_draw_lmh_demo();
-  lcd_draw_lmh_shift_lights(0);
-  lcd_draw_lmh_gear(0);
-  lcd_draw_lmh_rpm(0);
-  lcd_draw_lmh_speed(0);
-  lcd_draw_lmh_brake_temps(0, 0, 0, 0);
-  lcd_draw_lmh_tire_temps(0, 0, 0, 0);
-  lcd_draw_lmh_engine_temps(0, 0);
-  lcd_draw_lmh_lap_times(0, 0);
-  lcd_draw_lmh_fuel_status(0, 0);
-  lcd_draw_lmh_pedals(0, 0);
+  lcd_draw_demo();
+  lcd_draw_shift_lights(0);
+  lcd_draw_gear(0);
+  lcd_draw_rpm(0);
+  lcd_draw_speed(0);
+  lcd_draw_brake_temps(0, 0, 0, 0);
+  lcd_draw_tire_temps(0, 0, 0, 0);
+  lcd_draw_engine_temps(0, 0);
+  lcd_draw_lap_times(0, 0);
+  lcd_draw_fuel_status(0, 0);
+  lcd_draw_pedals(0, 0);
 }
 
 void dashboard_update(const uart_telemetry_t *telemetry,
@@ -2010,22 +2010,22 @@ void dashboard_update(const uart_telemetry_t *telemetry,
   }
 
   if ((int)telemetry->gear != state->gear) {
-    lcd_draw_lmh_gear(telemetry->gear);
+    lcd_draw_gear(telemetry->gear);
     state->gear = telemetry->gear;
   }
 
   if ((int)telemetry->rpm_pct_x10 != state->rpm_pct_x10) {
-    lcd_draw_lmh_shift_lights(telemetry->rpm_pct_x10);
+    lcd_draw_shift_lights(telemetry->rpm_pct_x10);
     state->rpm_pct_x10 = telemetry->rpm_pct_x10;
   }
 
   if ((int)telemetry->rpm != state->rpm) {
-    lcd_draw_lmh_rpm(telemetry->rpm);
+    lcd_draw_rpm(telemetry->rpm);
     state->rpm = telemetry->rpm;
   }
 
   if ((int)telemetry->speed != state->speed) {
-    lcd_draw_lmh_speed(telemetry->speed);
+    lcd_draw_speed(telemetry->speed);
     state->speed = telemetry->speed;
   }
 
@@ -2033,7 +2033,7 @@ void dashboard_update(const uart_telemetry_t *telemetry,
       ((int)telemetry->brake_temp_fr != state->brake_temp_fr) ||
       ((int)telemetry->brake_temp_rl != state->brake_temp_rl) ||
       ((int)telemetry->brake_temp_rr != state->brake_temp_rr)) {
-    lcd_draw_lmh_brake_temps(
+    lcd_draw_brake_temps(
         telemetry->brake_temp_fl, telemetry->brake_temp_fr,
         telemetry->brake_temp_rl, telemetry->brake_temp_rr);
     state->brake_temp_fl = telemetry->brake_temp_fl;
@@ -2046,7 +2046,7 @@ void dashboard_update(const uart_telemetry_t *telemetry,
       ((int)telemetry->tire_temp_fr != state->tire_temp_fr) ||
       ((int)telemetry->tire_temp_rl != state->tire_temp_rl) ||
       ((int)telemetry->tire_temp_rr != state->tire_temp_rr)) {
-    lcd_draw_lmh_tire_temps(telemetry->tire_temp_fl, telemetry->tire_temp_fr,
+    lcd_draw_tire_temps(telemetry->tire_temp_fl, telemetry->tire_temp_fr,
                             telemetry->tire_temp_rl, telemetry->tire_temp_rr);
     state->tire_temp_fl = telemetry->tire_temp_fl;
     state->tire_temp_fr = telemetry->tire_temp_fr;
@@ -2056,60 +2056,60 @@ void dashboard_update(const uart_telemetry_t *telemetry,
 
   if (((int)telemetry->water_temp != state->water_temp) ||
       ((int)telemetry->oil_temp != state->oil_temp)) {
-    lcd_draw_lmh_engine_temps(telemetry->water_temp, telemetry->oil_temp);
+    lcd_draw_engine_temps(telemetry->water_temp, telemetry->oil_temp);
     state->water_temp = telemetry->water_temp;
     state->oil_temp = telemetry->oil_temp;
   }
 
   if (((long)telemetry->best_lap_ms != state->best_lap_ms) ||
       ((long)telemetry->current_lap_ms != state->current_lap_ms)) {
-    lcd_draw_lmh_lap_times(telemetry->current_lap_ms, telemetry->best_lap_ms);
+    lcd_draw_lap_times(telemetry->current_lap_ms, telemetry->best_lap_ms);
     state->best_lap_ms = telemetry->best_lap_ms;
     state->current_lap_ms = telemetry->current_lap_ms;
   }
 
   if (((int)telemetry->fuel_liters != state->fuel_liters) ||
       ((int)telemetry->fuel_pct != state->fuel_pct)) {
-    lcd_draw_lmh_fuel_status(telemetry->fuel_liters, telemetry->fuel_pct);
+    lcd_draw_fuel_status(telemetry->fuel_liters, telemetry->fuel_pct);
     state->fuel_liters = telemetry->fuel_liters;
     state->fuel_pct = telemetry->fuel_pct;
   }
 
   if (((int)telemetry->throttle_pct != state->throttle_pct) ||
       ((int)telemetry->brake_pct != state->brake_pct)) {
-    lcd_draw_lmh_pedals(telemetry->throttle_pct, telemetry->brake_pct);
+    lcd_draw_pedals(telemetry->throttle_pct, telemetry->brake_pct);
     state->throttle_pct = telemetry->throttle_pct;
     state->brake_pct = telemetry->brake_pct;
   }
 }
 
-void lcd_draw_lmh_rpm(int rpm) {
-  lcd_compose_bold_int_rect(104, 24, rpm, 13, 19, 0, g_lmh_rpm_color,
-                            g_lmh_center_bg, g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(108, 32, 104, 24, g_lmh_rect_buf);
+void lcd_draw_rpm(int rpm) {
+  lcd_compose_bold_int_rect(104, 24, rpm, 13, 19, 0, g_dash_rpm_color,
+                            g_dash_center_bg, g_dash_rect_buf);
+  lcd_blit_rgb565_rect(108, 32, 104, 24, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_gear(int gear) {
+void lcd_draw_gear(int gear) {
   if (gear == 0) {
-    lcd_compose_bold_char_rect(104, 72, 'N', 44, 64, g_lmh_gear_color,
-                               g_lmh_center_bg, g_lmh_rect_buf);
+    lcd_compose_bold_char_rect(104, 72, 'N', 44, 64, g_dash_gear_color,
+                               g_dash_center_bg, g_dash_rect_buf);
   } else if ((gear < 0) || (gear == 255)) {
-    lcd_compose_bold_char_rect(104, 72, 'R', 44, 64, g_lmh_gear_color,
-                               g_lmh_center_bg, g_lmh_rect_buf);
+    lcd_compose_bold_char_rect(104, 72, 'R', 44, 64, g_dash_gear_color,
+                               g_dash_center_bg, g_dash_rect_buf);
   } else {
-    lcd_compose_bold_int_rect(104, 72, gear, 44, 64, 0, g_lmh_gear_color,
-                              g_lmh_center_bg, g_lmh_rect_buf);
+    lcd_compose_bold_int_rect(104, 72, gear, 44, 64, 0, g_dash_gear_color,
+                              g_dash_center_bg, g_dash_rect_buf);
   }
-  lcd_blit_rgb565_rect(108, 64, 104, 72, g_lmh_rect_buf);
+  lcd_blit_rgb565_rect(108, 64, 104, 72, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_speed(int speed) {
-  lcd_compose_bold_int_rect(104, 24, speed, 13, 19, 0, g_lmh_speed_color,
-                            g_lmh_center_bg, g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(108, 144, 104, 24, g_lmh_rect_buf);
+void lcd_draw_speed(int speed) {
+  lcd_compose_bold_int_rect(104, 24, speed, 13, 19, 0, g_dash_speed_color,
+                            g_dash_center_bg, g_dash_rect_buf);
+  lcd_blit_rgb565_rect(108, 144, 104, 24, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_shift_lights(uint16_t rpm_pct_x10) {
+void lcd_draw_shift_lights(uint16_t rpm_pct_x10) {
   uint16_t region_x = 0;
   uint16_t region_y = 0;
   uint16_t region_w = 320;
@@ -2124,34 +2124,34 @@ void lcd_draw_lmh_shift_lights(uint16_t rpm_pct_x10) {
   uint8_t led;
 
   for (i = 0; i < ((uint32_t)region_w * region_h); i++) {
-    g_lmh_rect_buf[i] = BLACK;
+    g_dash_rect_buf[i] = BLACK;
   }
 
   for (led = 0; led < 10; led++) {
     uint16_t led_x = (uint16_t)(start_x + led * (led_w + gap));
     uint16_t color = lcd_get_shift_light_color(led, rpm_pct_x10);
-    lcd_fill_round_bar_to_buf(g_lmh_rect_buf, region_w, region_h, led_x,
+    lcd_fill_round_bar_to_buf(g_dash_rect_buf, region_w, region_h, led_x,
                               start_y, led_w, led_h, color);
   }
 
-  lcd_blit_rgb565_rect(region_x, region_y, region_w, region_h, g_lmh_rect_buf);
+  lcd_blit_rgb565_rect(region_x, region_y, region_w, region_h, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_engine_temps(int water_temp, int oil_temp) {
+void lcd_draw_engine_temps(int water_temp, int oil_temp) {
   uint16_t number_y = 195;
 
   lcd_compose_bold_int_rect(32, 20, water_temp, SIMHEI_DIGIT_SMALL_WIDTH,
                             SIMHEI_DIGIT_SMALL_HEIGHT, 0, WHITE, BLACK,
-                            g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(8, number_y, 32, 20, g_lmh_rect_buf);
+                            g_dash_rect_buf);
+  lcd_blit_rgb565_rect(8, number_y, 32, 20, g_dash_rect_buf);
 
   lcd_compose_bold_int_rect(32, 20, oil_temp, SIMHEI_DIGIT_SMALL_WIDTH,
                             SIMHEI_DIGIT_SMALL_HEIGHT, 0, WHITE, BLACK,
-                            g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(40, number_y, 32, 20, g_lmh_rect_buf);
+                            g_dash_rect_buf);
+  lcd_blit_rgb565_rect(40, number_y, 32, 20, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_lap_times(uint32_t current_lap_ms, uint32_t best_lap_ms) {
+void lcd_draw_lap_times(uint32_t current_lap_ms, uint32_t best_lap_ms) {
   char best_buf[12];
   char current_buf[12];
   uint16_t region_x = 216;
@@ -2165,27 +2165,27 @@ void lcd_draw_lmh_lap_times(uint32_t current_lap_ms, uint32_t best_lap_ms) {
   lcd_format_lap_time(current_lap_ms, current_buf);
 
   for (i = 0; i < ((uint32_t)region_width * time_height); i++) {
-    g_lmh_rect_buf[i] = g_lmh_lap_bg;
+    g_dash_rect_buf[i] = g_dash_lap_bg;
   }
   lcd_draw_string_to_buf(
-      g_lmh_rect_buf, region_width, time_height,
+      g_dash_rect_buf, region_width, time_height,
       (uint16_t)(lcd_center_text_x(0, region_width, best_buf, 16)), 0, best_buf,
       16, WHITE);
   lcd_blit_rgb565_rect(region_x, best_time_y, region_width, time_height,
-                       g_lmh_rect_buf);
+                       g_dash_rect_buf);
 
   for (i = 0; i < ((uint32_t)region_width * time_height); i++) {
-    g_lmh_rect_buf[i] = g_lmh_lap_bg;
+    g_dash_rect_buf[i] = g_dash_lap_bg;
   }
   lcd_draw_string_to_buf(
-      g_lmh_rect_buf, region_width, time_height,
+      g_dash_rect_buf, region_width, time_height,
       (uint16_t)(lcd_center_text_x(0, region_width, current_buf, 16)), 0,
       current_buf, 16, WHITE);
   lcd_blit_rgb565_rect(region_x, current_time_y, region_width, time_height,
-                       g_lmh_rect_buf);
+                       g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct) {
+void lcd_draw_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct) {
   char pct_buf[8];
   uint8_t pct_len;
   uint16_t liters_x = 240;
@@ -2206,47 +2206,47 @@ void lcd_draw_lmh_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct) {
   pct_len = lcd_ascii_strlen(pct_buf);
 
   lcd_compose_bold_fuel_rect(liters_w, liters_h, fuel_liters, WHITE, BLACK,
-                             g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(liters_x, liters_y, liters_w, liters_h, g_lmh_rect_buf);
+                             g_dash_rect_buf);
+  lcd_blit_rgb565_rect(liters_x, liters_y, liters_w, liters_h, g_dash_rect_buf);
 
   lcd_compose_vertical_bar_rect(bar_width, bar_height, fuel_pct,
-                                g_lmh_fuel_bar_color, g_lmh_bar_bg,
-                                g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(bar_x, bar_y, bar_width, bar_height, g_lmh_rect_buf);
+                                g_dash_fuel_bar_color, g_dash_bar_bg,
+                                g_dash_rect_buf);
+  lcd_blit_rgb565_rect(bar_x, bar_y, bar_width, bar_height, g_dash_rect_buf);
 
   for (i = 0; i < ((uint32_t)pct_w * pct_h); i++) {
-    g_lmh_rect_buf[i] = BLACK;
+    g_dash_rect_buf[i] = BLACK;
   }
-  lcd_draw_string_to_buf(g_lmh_rect_buf, pct_w, pct_h, 0, 0, pct_buf, 16,
+  lcd_draw_string_to_buf(g_dash_rect_buf, pct_w, pct_h, 0, 0, pct_buf, 16,
                          WHITE);
-  lcd_draw_string_to_buf(g_lmh_rect_buf, pct_w, pct_h,
+  lcd_draw_string_to_buf(g_dash_rect_buf, pct_w, pct_h,
                          (uint16_t)(pct_len * (16 / 2) + 2), 0, "%", 16,
                          WHITE);
-  lcd_blit_rgb565_rect(pct_x, pct_y, pct_w, pct_h, g_lmh_rect_buf);
+  lcd_blit_rgb565_rect(pct_x, pct_y, pct_w, pct_h, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_pedals(int throttle_pct, int brake_pct) {
-  lcd_compose_bar_rect(130, 14, (uint8_t)brake_pct, g_lmh_brake_color,
-                       g_lmh_bar_bg, g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(95, 192, 130, 14, g_lmh_rect_buf);
+void lcd_draw_pedals(int throttle_pct, int brake_pct) {
+  lcd_compose_bar_rect(130, 14, (uint8_t)brake_pct, g_dash_brake_color,
+                       g_dash_bar_bg, g_dash_rect_buf);
+  lcd_blit_rgb565_rect(95, 192, 130, 14, g_dash_rect_buf);
 
-  lcd_compose_bar_rect(130, 14, (uint8_t)throttle_pct, g_lmh_throttle_color,
-                       g_lmh_bar_bg, g_lmh_rect_buf);
-  lcd_blit_rgb565_rect(95, 214, 130, 14, g_lmh_rect_buf);
+  lcd_compose_bar_rect(130, 14, (uint8_t)throttle_pct, g_dash_throttle_color,
+                       g_dash_bar_bg, g_dash_rect_buf);
+  lcd_blit_rgb565_rect(95, 214, 130, 14, g_dash_rect_buf);
 }
 
-void lcd_draw_lmh_brake_temps(int fl, int fr, int rl, int rr) {
-  lcd_draw_lmh_brake_temp_cell(6, 29, 41, 35, fl);
-  lcd_draw_lmh_brake_temp_cell(61, 29, 41, 35, fr);
-  lcd_draw_lmh_brake_temp_cell(6, 67, 41, 34, rl);
-  lcd_draw_lmh_brake_temp_cell(61, 67, 41, 34, rr);
+void lcd_draw_brake_temps(int fl, int fr, int rl, int rr) {
+  lcd_draw_brake_temp_cell(6, 29, 41, 35, fl);
+  lcd_draw_brake_temp_cell(61, 29, 41, 35, fr);
+  lcd_draw_brake_temp_cell(6, 67, 41, 34, rl);
+  lcd_draw_brake_temp_cell(61, 67, 41, 34, rr);
 }
 
-void lcd_draw_lmh_tire_temps(int fl, int fr, int rl, int rr) {
-  lcd_draw_lmh_tire_temp_cell(218, 29, 42, 35, fl);
-  lcd_draw_lmh_tire_temp_cell(274, 29, 40, 35, fr);
-  lcd_draw_lmh_tire_temp_cell(218, 67, 42, 34, rl);
-  lcd_draw_lmh_tire_temp_cell(274, 67, 40, 34, rr);
+void lcd_draw_tire_temps(int fl, int fr, int rl, int rr) {
+  lcd_draw_tire_temp_cell(218, 29, 42, 35, fl);
+  lcd_draw_tire_temp_cell(274, 29, 40, 35, fr);
+  lcd_draw_tire_temp_cell(218, 67, 42, 34, rl);
+  lcd_draw_tire_temp_cell(274, 67, 40, 34, rr);
 }
 
 static void lcd_draw_mask_bitmap_full(uint16_t x, uint16_t y,
@@ -2315,12 +2315,12 @@ void lcd_draw_bold_digit(uint16_t x, uint16_t y, char digit, uint16_t width,
       (height == SIMHEI_DIGIT_LARGE_HEIGHT)) {
     lcd_draw_mask_bitmap_full(
         x, y, SIMHEI_DIGIT_LARGE_WIDTH, SIMHEI_DIGIT_LARGE_HEIGHT,
-        g_simhei_digits_large_mask[index], color, g_lmh_center_bg);
+        g_simhei_digits_large_mask[index], color, g_dash_center_bg);
   } else if ((width == SIMHEI_DIGIT_SMALL_WIDTH) &&
              (height == SIMHEI_DIGIT_SMALL_HEIGHT)) {
     lcd_draw_mask_bitmap_full(
         x, y, SIMHEI_DIGIT_SMALL_WIDTH, SIMHEI_DIGIT_SMALL_HEIGHT,
-        g_simhei_digits_small_mask[index], color, g_lmh_center_bg);
+        g_simhei_digits_small_mask[index], color, g_dash_center_bg);
   }
 }
 
@@ -2372,4 +2372,6 @@ void lcd_draw_bold_int_in_rect(uint16_t x, uint16_t y, uint16_t rect_width,
   lcd_draw_bold_number(draw_x, draw_y, buf, digit_width, digit_height, spacing,
                        color);
 }
+
+
 
