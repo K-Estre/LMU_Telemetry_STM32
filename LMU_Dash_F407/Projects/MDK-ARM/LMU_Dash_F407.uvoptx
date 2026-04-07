@@ -22,7 +22,7 @@
   </DaveTm>
 
   <Target>
-    <TargetName>TFTLCD</TargetName>
+    <TargetName>LMU_Dash_F407</TargetName>
     <ToolsetNumber>0x4</ToolsetNumber>
     <ToolsetName>ARM-ADS</ToolsetName>
     <TargetOption>
@@ -486,7 +486,7 @@
     <RteFlg>0</RteFlg>
     <File>
       <GroupNumber>5</GroupNumber>
-      <FileNumber>22</FileNumber>
+      <FileNumber>21</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
@@ -499,4 +499,3 @@
   </Group>
 
 </ProjectOpt>
-

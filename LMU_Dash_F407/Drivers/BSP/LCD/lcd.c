@@ -3,128 +3,105 @@
 #include "./BSP/LCD/lcd.h"
 
 #include "./BSP/LCD/lcd_digit_font_simhei.h"
+#include "./BSP/LCD/lcd_ex.c"
 #include "./BSP/LCD/lcdfont.h"
 #include "./SYSTEM/usart/usart.h"
 #include "stdio.h"
 #include "stdlib.h"
 
+SRAM_HandleTypeDef g_sram_handle;
 
-#include "./BSP/LCD/lcd_ex.c"
-
-SRAM_HandleTypeDef g_sram_handle; 
-
-
-uint32_t g_point_color = 0xF800; 
-uint32_t g_back_color = 0xFFFF;  
-
+uint32_t g_point_color = 0xF800;
+uint32_t g_back_color = 0xFFFF;
 
 _lcd_dev lcddev;
 
-
 void lcd_wr_data(volatile uint16_t data) {
-  data = data; 
+  data = data;
   LCD->LCD_RAM = data;
 }
 
-
 void lcd_wr_regno(volatile uint16_t regno) {
-  regno = regno; 
-  LCD->LCD_REG = regno; 
+  regno = regno;
+  LCD->LCD_REG = regno;
 }
-
 
 void lcd_write_reg(uint16_t regno, uint16_t data) {
-  LCD->LCD_REG = regno; 
-  LCD->LCD_RAM = data;  
+  LCD->LCD_REG = regno;
+  LCD->LCD_RAM = data;
 }
 
-
-static void lcd_opt_delay(uint32_t i) {
-  while (i--); 
-}
-
+static void lcd_opt_delay(uint32_t i) { while (i--); }
 
 static uint16_t lcd_rd_data(void) {
-  volatile uint16_t ram; 
+  volatile uint16_t ram;
   lcd_opt_delay(2);
   ram = LCD->LCD_RAM;
   return ram;
 }
 
-
 void lcd_write_ram_prepare(void) { LCD->LCD_REG = lcddev.wramcmd; }
-
 
 uint32_t lcd_read_point(uint16_t x, uint16_t y) {
   uint16_t r = 0, g = 0, b = 0;
 
   if (x >= lcddev.width || y >= lcddev.height) {
-    return 0; 
+    return 0;
   }
 
-  lcd_set_cursor(x, y); 
+  lcd_set_cursor(x, y);
 
   if (lcddev.id == 0x5510) {
-    lcd_wr_regno(0x2E00); 
+    lcd_wr_regno(0x2E00);
   } else {
-    lcd_wr_regno(0x2E); 
+    lcd_wr_regno(0x2E);
   }
 
-  r = lcd_rd_data(); 
+  r = lcd_rd_data();
 
   if (lcddev.id == 0x1963) {
-    return r; 
-  }
-
-  r = lcd_rd_data(); 
-
-  if (lcddev.id == 0x7796) 
-  {
     return r;
   }
 
-  
+  r = lcd_rd_data();
+
+  if (lcddev.id == 0x7796) {
+    return r;
+  }
+
   b = lcd_rd_data();
-  g = r & 0xFF; 
+  g = r & 0xFF;
   g <<= 8;
 
-  return (((r >> 11) << 11) | ((g >> 10) << 5) |
-          (b >> 11)); 
+  return (((r >> 11) << 11) | ((g >> 10) << 5) | (b >> 11));
 }
-
 
 void lcd_display_on(void) {
   if (lcddev.id == 0x5510) {
-    lcd_wr_regno(0x2900); 
-  } else 
-  {
-    lcd_wr_regno(0x29); 
+    lcd_wr_regno(0x2900);
+  } else {
+    lcd_wr_regno(0x29);
   }
 }
-
 
 void lcd_display_off(void) {
   if (lcddev.id == 0x5510) {
-    lcd_wr_regno(0x2800); 
-  } else 
-  {
-    lcd_wr_regno(0x28); 
+    lcd_wr_regno(0x2800);
+  } else {
+    lcd_wr_regno(0x28);
   }
 }
 
-
 void lcd_set_cursor(uint16_t x, uint16_t y) {
   if (lcddev.id == 0x1963) {
-    if (lcddev.dir == 0) 
-    {
+    if (lcddev.dir == 0) {
       x = lcddev.width - 1 - x;
       lcd_wr_regno(lcddev.setxcmd);
       lcd_wr_data(0);
       lcd_wr_data(0);
       lcd_wr_data(x >> 8);
       lcd_wr_data(x & 0xFF);
-    } else 
-    {
+    } else {
       lcd_wr_regno(lcddev.setxcmd);
       lcd_wr_data(x >> 8);
       lcd_wr_data(x & 0xFF);
@@ -147,8 +124,7 @@ void lcd_set_cursor(uint16_t x, uint16_t y) {
     lcd_wr_data(y >> 8);
     lcd_wr_regno(lcddev.setycmd + 1);
     lcd_wr_data(y & 0xFF);
-  } else 
-  {
+  } else {
     lcd_wr_regno(lcddev.setxcmd);
     lcd_wr_data(x >> 8);
     lcd_wr_data(x & 0xFF);
@@ -158,17 +134,14 @@ void lcd_set_cursor(uint16_t x, uint16_t y) {
   }
 }
 
-
 void lcd_scan_dir(uint8_t dir) {
   uint16_t regval = 0;
   uint16_t dirreg = 0;
   uint16_t temp;
 
-  
   if ((lcddev.dir == 1 && lcddev.id != 0x1963) ||
       (lcddev.dir == 0 && lcddev.id == 0x1963)) {
-    switch (dir) 
-    {
+    switch (dir) {
       case 0:
         dir = 6;
         break;
@@ -203,66 +176,61 @@ void lcd_scan_dir(uint8_t dir) {
     }
   }
 
-  
   switch (dir) {
-    case L2R_U2D: 
+    case L2R_U2D:
       regval |= (0 << 7) | (0 << 6) | (0 << 5);
       break;
 
-    case L2R_D2U: 
+    case L2R_D2U:
       regval |= (1 << 7) | (0 << 6) | (0 << 5);
       break;
 
-    case R2L_U2D: 
+    case R2L_U2D:
       regval |= (0 << 7) | (1 << 6) | (0 << 5);
       break;
 
-    case R2L_D2U: 
+    case R2L_D2U:
       regval |= (1 << 7) | (1 << 6) | (0 << 5);
       break;
 
-    case U2D_L2R: 
+    case U2D_L2R:
       regval |= (0 << 7) | (0 << 6) | (1 << 5);
       break;
 
-    case U2D_R2L: 
+    case U2D_R2L:
       regval |= (0 << 7) | (1 << 6) | (1 << 5);
       break;
 
-    case D2U_L2R: 
+    case D2U_L2R:
       regval |= (1 << 7) | (0 << 6) | (1 << 5);
       break;
 
-    case D2U_R2L: 
+    case D2U_R2L:
       regval |= (1 << 7) | (1 << 6) | (1 << 5);
       break;
   }
 
-  dirreg = 0x36; 
+  dirreg = 0x36;
 
   if (lcddev.id == 0x5510) {
-    dirreg = 0x3600; 
+    dirreg = 0x3600;
   }
 
-  
   if (lcddev.id == 0x9341 || lcddev.id == 0x7789 || lcddev.id == 0x7796) {
     regval |= 0x08;
   }
 
   lcd_write_reg(dirreg, regval);
 
-  if (lcddev.id != 0x1963) 
-  {
+  if (lcddev.id != 0x1963) {
     if (regval & 0x20) {
-      if (lcddev.width < lcddev.height) 
-      {
+      if (lcddev.width < lcddev.height) {
         temp = lcddev.width;
         lcddev.width = lcddev.height;
         lcddev.height = temp;
       }
     } else {
-      if (lcddev.width > lcddev.height) 
-      {
+      if (lcddev.width > lcddev.height) {
         temp = lcddev.width;
         lcddev.width = lcddev.height;
         lcddev.height = temp;
@@ -270,7 +238,6 @@ void lcd_scan_dir(uint8_t dir) {
     }
   }
 
-  
   if (lcddev.id == 0x5510) {
     lcd_wr_regno(lcddev.setxcmd);
     lcd_wr_data(0);
@@ -302,30 +269,26 @@ void lcd_scan_dir(uint8_t dir) {
   }
 }
 
-
 void lcd_draw_point(uint16_t x, uint16_t y, uint32_t color) {
-  lcd_set_cursor(x, y);    
-  lcd_write_ram_prepare(); 
+  lcd_set_cursor(x, y);
+  lcd_write_ram_prepare();
   LCD->LCD_RAM = color;
 }
 
-
 void lcd_ssd_backlight_set(uint8_t pwm) {
-  lcd_wr_regno(0xBE);      
-  lcd_wr_data(0x05);       
-  lcd_wr_data(pwm * 2.55); 
-  lcd_wr_data(0x01);       
-  lcd_wr_data(0xFF);       
-  lcd_wr_data(0x00);       
-  lcd_wr_data(0x00);       
+  lcd_wr_regno(0xBE);
+  lcd_wr_data(0x05);
+  lcd_wr_data(pwm * 2.55);
+  lcd_wr_data(0x01);
+  lcd_wr_data(0xFF);
+  lcd_wr_data(0x00);
+  lcd_wr_data(0x00);
 }
 
-
 void lcd_display_dir(uint8_t dir) {
-  lcddev.dir = dir; 
+  lcddev.dir = dir;
 
-  if (dir == 0) 
-  {
+  if (dir == 0) {
     lcddev.width = 240;
     lcddev.height = 320;
 
@@ -336,33 +299,29 @@ void lcd_display_dir(uint8_t dir) {
       lcddev.width = 480;
       lcddev.height = 800;
     } else if (lcddev.id == 0x1963) {
-      lcddev.wramcmd = 0x2C; 
-      lcddev.setxcmd = 0x2B; 
-      lcddev.setycmd = 0x2A; 
-      lcddev.width = 480;    
-      lcddev.height = 800;   
-    } else                   
-    {
+      lcddev.wramcmd = 0x2C;
+      lcddev.setxcmd = 0x2B;
+      lcddev.setycmd = 0x2A;
+      lcddev.width = 480;
+      lcddev.height = 800;
+    } else {
       lcddev.wramcmd = 0x2C;
       lcddev.setxcmd = 0x2A;
       lcddev.setycmd = 0x2B;
     }
 
-    if (lcddev.id == 0x5310 || lcddev.id == 0x7796) 
-    {
+    if (lcddev.id == 0x5310 || lcddev.id == 0x7796) {
       lcddev.width = 320;
       lcddev.height = 480;
     }
 
-    if (lcddev.id == 0X9806) 
-    {
+    if (lcddev.id == 0X9806) {
       lcddev.width = 480;
       lcddev.height = 800;
     }
-  } else 
-  {
-    lcddev.width = 320;  
-    lcddev.height = 240; 
+  } else {
+    lcddev.width = 320;
+    lcddev.height = 240;
 
     if (lcddev.id == 0x5510) {
       lcddev.wramcmd = 0x2C00;
@@ -371,37 +330,32 @@ void lcd_display_dir(uint8_t dir) {
       lcddev.width = 800;
       lcddev.height = 480;
     } else if (lcddev.id == 0x1963 || lcddev.id == 0x9806) {
-      lcddev.wramcmd = 0x2C; 
-      lcddev.setxcmd = 0x2A; 
-      lcddev.setycmd = 0x2B; 
-      lcddev.width = 800;    
-      lcddev.height = 480;   
-    } else                   
-    {
+      lcddev.wramcmd = 0x2C;
+      lcddev.setxcmd = 0x2A;
+      lcddev.setycmd = 0x2B;
+      lcddev.width = 800;
+      lcddev.height = 480;
+    } else {
       lcddev.wramcmd = 0x2C;
       lcddev.setxcmd = 0x2A;
       lcddev.setycmd = 0x2B;
     }
 
-    if (lcddev.id == 0x5310 || lcddev.id == 0x7796) 
-    {
+    if (lcddev.id == 0x5310 || lcddev.id == 0x7796) {
       lcddev.width = 480;
       lcddev.height = 320;
     }
   }
 
-  lcd_scan_dir(DFT_SCAN_DIR); 
+  lcd_scan_dir(DFT_SCAN_DIR);
 }
-
 
 void lcd_set_window(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height) {
   uint16_t twidth, theight;
   twidth = sx + width - 1;
   theight = sy + height - 1;
 
-  if (lcddev.id == 0x1963 &&
-      lcddev.dir != 1) 
-  {
+  if (lcddev.id == 0x1963 && lcddev.dir != 1) {
     sx = lcddev.width - width - sx;
     height = sy + height - 1;
     lcd_wr_regno(lcddev.setxcmd);
@@ -431,8 +385,7 @@ void lcd_set_window(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height) {
     lcd_wr_data(theight >> 8);
     lcd_wr_regno(lcddev.setycmd + 3);
     lcd_wr_data(theight & 0xFF);
-  } else 
-  {
+  } else {
     lcd_wr_regno(lcddev.setxcmd);
     lcd_wr_data(sx >> 8);
     lcd_wr_data(sx & 0xFF);
@@ -446,187 +399,156 @@ void lcd_set_window(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height) {
   }
 }
 
-
 void HAL_SRAM_MspInit(SRAM_HandleTypeDef* hsram) {
   GPIO_InitTypeDef gpio_init_struct;
 
-  __HAL_RCC_FSMC_CLK_ENABLE();  
-  __HAL_RCC_GPIOD_CLK_ENABLE(); 
-  __HAL_RCC_GPIOE_CLK_ENABLE(); 
+  __HAL_RCC_FSMC_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
 
-  
   gpio_init_struct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_8 | GPIO_PIN_9 |
                          GPIO_PIN_10 | GPIO_PIN_14 | GPIO_PIN_15;
-  gpio_init_struct.Mode = GPIO_MODE_AF_PP;       
-  gpio_init_struct.Pull = GPIO_PULLUP;           
-  gpio_init_struct.Speed = GPIO_SPEED_FREQ_HIGH; 
-  gpio_init_struct.Alternate = GPIO_AF12_FSMC;   
+  gpio_init_struct.Mode = GPIO_MODE_AF_PP;
+  gpio_init_struct.Pull = GPIO_PULLUP;
+  gpio_init_struct.Speed = GPIO_SPEED_FREQ_HIGH;
+  gpio_init_struct.Alternate = GPIO_AF12_FSMC;
 
-  HAL_GPIO_Init(GPIOD, &gpio_init_struct); 
+  HAL_GPIO_Init(GPIOD, &gpio_init_struct);
 
-  
   gpio_init_struct.Pin = GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 |
                          GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 |
                          GPIO_PIN_15;
   HAL_GPIO_Init(GPIOE, &gpio_init_struct);
 }
 
-
 void lcd_init(void) {
   GPIO_InitTypeDef gpio_init_struct;
   FSMC_NORSRAM_TimingTypeDef fsmc_read_handle;
   FSMC_NORSRAM_TimingTypeDef fsmc_write_handle;
 
-  LCD_CS_GPIO_CLK_ENABLE(); 
-  LCD_WR_GPIO_CLK_ENABLE(); 
-  LCD_RD_GPIO_CLK_ENABLE(); 
-  LCD_RS_GPIO_CLK_ENABLE(); 
-  LCD_BL_GPIO_CLK_ENABLE(); 
+  LCD_CS_GPIO_CLK_ENABLE();
+  LCD_WR_GPIO_CLK_ENABLE();
+  LCD_RD_GPIO_CLK_ENABLE();
+  LCD_RS_GPIO_CLK_ENABLE();
+  LCD_BL_GPIO_CLK_ENABLE();
 
   gpio_init_struct.Pin = LCD_CS_GPIO_PIN;
-  gpio_init_struct.Mode = GPIO_MODE_AF_PP;            
-  gpio_init_struct.Pull = GPIO_PULLUP;                
-  gpio_init_struct.Speed = GPIO_SPEED_FREQ_HIGH;      
-  gpio_init_struct.Alternate = GPIO_AF12_FSMC;        
-  HAL_GPIO_Init(LCD_CS_GPIO_PORT, &gpio_init_struct); 
+  gpio_init_struct.Mode = GPIO_MODE_AF_PP;
+  gpio_init_struct.Pull = GPIO_PULLUP;
+  gpio_init_struct.Speed = GPIO_SPEED_FREQ_HIGH;
+  gpio_init_struct.Alternate = GPIO_AF12_FSMC;
+  HAL_GPIO_Init(LCD_CS_GPIO_PORT, &gpio_init_struct);
 
   gpio_init_struct.Pin = LCD_WR_GPIO_PIN;
-  HAL_GPIO_Init(LCD_WR_GPIO_PORT, &gpio_init_struct); 
+  HAL_GPIO_Init(LCD_WR_GPIO_PORT, &gpio_init_struct);
 
   gpio_init_struct.Pin = LCD_RD_GPIO_PIN;
-  HAL_GPIO_Init(LCD_RD_GPIO_PORT, &gpio_init_struct); 
+  HAL_GPIO_Init(LCD_RD_GPIO_PORT, &gpio_init_struct);
 
   gpio_init_struct.Pin = LCD_RS_GPIO_PIN;
-  HAL_GPIO_Init(LCD_RS_GPIO_PORT, &gpio_init_struct); 
+  HAL_GPIO_Init(LCD_RS_GPIO_PORT, &gpio_init_struct);
 
   gpio_init_struct.Pin = LCD_BL_GPIO_PIN;
-  gpio_init_struct.Mode = GPIO_MODE_OUTPUT_PP; 
-  HAL_GPIO_Init(LCD_BL_GPIO_PORT,
-                &gpio_init_struct); 
+  gpio_init_struct.Mode = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(LCD_BL_GPIO_PORT, &gpio_init_struct);
 
   g_sram_handle.Instance = FSMC_NORSRAM_DEVICE;
   g_sram_handle.Extended = FSMC_NORSRAM_EXTENDED_DEVICE;
 
-  g_sram_handle.Init.NSBank = FSMC_NORSRAM_BANK4; 
-  g_sram_handle.Init.DataAddressMux =
-      FSMC_DATA_ADDRESS_MUX_DISABLE; 
-  g_sram_handle.Init.MemoryDataWidth =
-      FSMC_NORSRAM_MEM_BUS_WIDTH_16; 
-  g_sram_handle.Init.BurstAccessMode =
-      FSMC_BURST_ACCESS_MODE_DISABLE; 
-  g_sram_handle.Init.WaitSignalPolarity =
-      FSMC_WAIT_SIGNAL_POLARITY_LOW; 
-  g_sram_handle.Init.WaitSignalActive =
-      FSMC_WAIT_TIMING_BEFORE_WS; 
-  g_sram_handle.Init.WriteOperation =
-      FSMC_WRITE_OPERATION_ENABLE; 
-  g_sram_handle.Init.WaitSignal =
-      FSMC_WAIT_SIGNAL_DISABLE; 
-  g_sram_handle.Init.ExtendedMode =
-      FSMC_EXTENDED_MODE_ENABLE; 
-  g_sram_handle.Init.AsynchronousWait =
-      FSMC_ASYNCHRONOUS_WAIT_DISABLE; 
-  g_sram_handle.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE; 
+  g_sram_handle.Init.NSBank = FSMC_NORSRAM_BANK4;
+  g_sram_handle.Init.DataAddressMux = FSMC_DATA_ADDRESS_MUX_DISABLE;
+  g_sram_handle.Init.MemoryDataWidth = FSMC_NORSRAM_MEM_BUS_WIDTH_16;
+  g_sram_handle.Init.BurstAccessMode = FSMC_BURST_ACCESS_MODE_DISABLE;
+  g_sram_handle.Init.WaitSignalPolarity = FSMC_WAIT_SIGNAL_POLARITY_LOW;
+  g_sram_handle.Init.WaitSignalActive = FSMC_WAIT_TIMING_BEFORE_WS;
+  g_sram_handle.Init.WriteOperation = FSMC_WRITE_OPERATION_ENABLE;
+  g_sram_handle.Init.WaitSignal = FSMC_WAIT_SIGNAL_DISABLE;
+  g_sram_handle.Init.ExtendedMode = FSMC_EXTENDED_MODE_ENABLE;
+  g_sram_handle.Init.AsynchronousWait = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
+  g_sram_handle.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE;
 
-  
-  fsmc_read_handle.AddressSetupTime =
-      0x0F; 
-  fsmc_read_handle.AddressHoldTime = 0x00; 
-  fsmc_read_handle.DataSetupTime =
-      60; 
-  
-  fsmc_read_handle.AccessMode = FSMC_ACCESS_MODE_A; 
+  fsmc_read_handle.AddressSetupTime = 0x0F;
+  fsmc_read_handle.AddressHoldTime = 0x00;
+  fsmc_read_handle.DataSetupTime = 60;
 
-  
-  fsmc_write_handle.AddressSetupTime =
-      9; 
-  fsmc_write_handle.AddressHoldTime = 0x00; 
-  fsmc_write_handle.DataSetupTime =
-      9; 
-  
-  fsmc_write_handle.AccessMode = FSMC_ACCESS_MODE_A; 
+  fsmc_read_handle.AccessMode = FSMC_ACCESS_MODE_A;
+
+  fsmc_write_handle.AddressSetupTime = 9;
+  fsmc_write_handle.AddressHoldTime = 0x00;
+  fsmc_write_handle.DataSetupTime = 9;
+
+  fsmc_write_handle.AccessMode = FSMC_ACCESS_MODE_A;
 
   HAL_SRAM_Init(&g_sram_handle, &fsmc_read_handle, &fsmc_write_handle);
   delay_ms(50);
 
-  
   lcd_wr_regno(0xD3);
-  lcddev.id = lcd_rd_data(); 
-  lcddev.id = lcd_rd_data(); 
-  lcddev.id = lcd_rd_data(); 
+  lcddev.id = lcd_rd_data();
+  lcddev.id = lcd_rd_data();
+  lcddev.id = lcd_rd_data();
   lcddev.id <<= 8;
-  lcddev.id |= lcd_rd_data(); 
+  lcddev.id |= lcd_rd_data();
 
-  if (lcddev.id != 0x9341) 
-  {
+  if (lcddev.id != 0x9341) {
     lcd_wr_regno(0x04);
-    lcddev.id = lcd_rd_data(); 
-    lcddev.id = lcd_rd_data(); 
-    lcddev.id = lcd_rd_data(); 
+    lcddev.id = lcd_rd_data();
+    lcddev.id = lcd_rd_data();
+    lcddev.id = lcd_rd_data();
     lcddev.id <<= 8;
-    lcddev.id |= lcd_rd_data(); 
+    lcddev.id |= lcd_rd_data();
 
-    if (lcddev.id == 0x8552) 
-    {
+    if (lcddev.id == 0x8552) {
       lcddev.id = 0x7789;
     }
 
-    if (lcddev.id != 0x7789) 
-    {
+    if (lcddev.id != 0x7789) {
       lcd_wr_regno(0xD4);
-      lcddev.id = lcd_rd_data(); 
-      lcddev.id = lcd_rd_data(); 
-      lcddev.id = lcd_rd_data(); 
+      lcddev.id = lcd_rd_data();
+      lcddev.id = lcd_rd_data();
+      lcddev.id = lcd_rd_data();
       lcddev.id <<= 8;
-      lcddev.id |= lcd_rd_data(); 
+      lcddev.id |= lcd_rd_data();
 
-      if (lcddev.id != 0x5310) 
-      {
+      if (lcddev.id != 0x5310) {
         lcd_wr_regno(0XD3);
-        lcddev.id = lcd_rd_data(); 
-        lcddev.id = lcd_rd_data(); 
-        lcddev.id = lcd_rd_data(); 
+        lcddev.id = lcd_rd_data();
+        lcddev.id = lcd_rd_data();
+        lcddev.id = lcd_rd_data();
         lcddev.id <<= 8;
-        lcddev.id |= lcd_rd_data(); 
+        lcddev.id |= lcd_rd_data();
 
-        if (lcddev.id != 0x7796) 
-        {
-          
+        if (lcddev.id != 0x7796) {
           lcd_write_reg(0xF000, 0x0055);
           lcd_write_reg(0xF001, 0x00AA);
           lcd_write_reg(0xF002, 0x0052);
           lcd_write_reg(0xF003, 0x0008);
           lcd_write_reg(0xF004, 0x0001);
 
-          lcd_wr_regno(0xC500);      
-          lcddev.id = lcd_rd_data(); 
+          lcd_wr_regno(0xC500);
+          lcddev.id = lcd_rd_data();
           lcddev.id <<= 8;
 
-          lcd_wr_regno(0xC501);       
-          lcddev.id |= lcd_rd_data(); 
+          lcd_wr_regno(0xC501);
+          lcddev.id |= lcd_rd_data();
 
-          delay_ms(5); 
+          delay_ms(5);
 
-          if (lcddev.id != 0x5510) 
-          {
+          if (lcddev.id != 0x5510) {
             lcd_wr_regno(0XD3);
-            lcddev.id = lcd_rd_data(); 
-            lcddev.id = lcd_rd_data(); 
-            lcddev.id = lcd_rd_data(); 
+            lcddev.id = lcd_rd_data();
+            lcddev.id = lcd_rd_data();
+            lcddev.id = lcd_rd_data();
             lcddev.id <<= 8;
-            lcddev.id |= lcd_rd_data(); 
+            lcddev.id |= lcd_rd_data();
 
-            if (lcddev.id != 0x9806) 
-            {
+            if (lcddev.id != 0x9806) {
               lcd_wr_regno(0xA1);
               lcddev.id = lcd_rd_data();
-              lcddev.id = lcd_rd_data(); 
+              lcddev.id = lcd_rd_data();
               lcddev.id <<= 8;
-              lcddev.id |= lcd_rd_data(); 
+              lcddev.id |= lcd_rd_data();
 
-              if (lcddev.id == 0x5761)
-                lcddev.id =
-                    0x1963; 
+              if (lcddev.id == 0x5761) lcddev.id = 0x1963;
             }
           }
         }
@@ -635,74 +557,61 @@ void lcd_init(void) {
   }
 
   if (lcddev.id == 0x7789) {
-    lcd_ex_st7789_reginit(); 
+    lcd_ex_st7789_reginit();
   } else if (lcddev.id == 0x9341) {
-    lcd_ex_ili9341_reginit(); 
+    lcd_ex_ili9341_reginit();
   } else if (lcddev.id == 0x5310) {
-    lcd_ex_nt35310_reginit(); 
+    lcd_ex_nt35310_reginit();
   } else if (lcddev.id == 0x7796) {
-    lcd_ex_st7796_reginit(); 
+    lcd_ex_st7796_reginit();
   } else if (lcddev.id == 0x5510) {
-    lcd_ex_nt35510_reginit(); 
+    lcd_ex_nt35510_reginit();
   } else if (lcddev.id == 0x9806) {
-    lcd_ex_ili9806_reginit(); 
+    lcd_ex_ili9806_reginit();
   } else if (lcddev.id == 0x1963) {
-    lcd_ex_ssd1963_reginit();   
-    lcd_ssd_backlight_set(100); 
+    lcd_ex_ssd1963_reginit();
+    lcd_ssd_backlight_set(100);
   }
 
-  
-  
   if (lcddev.id == 0x7789) {
-    
-    fsmc_write_handle.AddressSetupTime =
-        3; 
-    fsmc_write_handle.DataSetupTime =
-        3; 
+    fsmc_write_handle.AddressSetupTime = 2;
+    fsmc_write_handle.DataSetupTime = 3;
     FSMC_NORSRAM_Extended_Timing_Init(
         g_sram_handle.Extended, &fsmc_write_handle, g_sram_handle.Init.NSBank,
         g_sram_handle.Init.ExtendedMode);
   } else if (lcddev.id == 0x9806 || lcddev.id == 0x9341 ||
              lcddev.id == 0x5510) {
-    
-    fsmc_write_handle.AddressSetupTime =
-        2; 
-    fsmc_write_handle.DataSetupTime =
-        2; 
+    fsmc_write_handle.AddressSetupTime = 2;
+    fsmc_write_handle.DataSetupTime = 2;
     FSMC_NORSRAM_Extended_Timing_Init(
         g_sram_handle.Extended, &fsmc_write_handle, g_sram_handle.Init.NSBank,
         g_sram_handle.Init.ExtendedMode);
   } else if (lcddev.id == 0x5310 || lcddev.id == 0x7796 ||
              lcddev.id == 0x1963) {
-    
-    fsmc_write_handle.AddressSetupTime =
-        1; 
-    fsmc_write_handle.DataSetupTime =
-        1; 
+    fsmc_write_handle.AddressSetupTime = 1;
+    fsmc_write_handle.DataSetupTime = 1;
     FSMC_NORSRAM_Extended_Timing_Init(
         g_sram_handle.Extended, &fsmc_write_handle, g_sram_handle.Init.NSBank,
         g_sram_handle.Init.ExtendedMode);
   }
 
-  lcd_display_dir(1); 
-  LCD_BL(1);          
+  lcd_display_dir(1);
+  LCD_BL(1);
   lcd_clear(BLUE);
 }
-
 
 void lcd_clear(uint16_t color) {
   uint32_t index = 0;
   uint32_t totalpoint = lcddev.width;
 
-  totalpoint *= lcddev.height;  
-  lcd_set_cursor(0x00, 0x0000); 
-  lcd_write_ram_prepare();      
+  totalpoint *= lcddev.height;
+  lcd_set_cursor(0x00, 0x0000);
+  lcd_write_ram_prepare();
 
   for (index = 0; index < totalpoint; index++) {
     LCD->LCD_RAM = color;
   }
 }
-
 
 void lcd_fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey,
               uint32_t color) {
@@ -711,49 +620,47 @@ void lcd_fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey,
   xlen = ex - sx + 1;
 
   for (i = sy; i <= ey; i++) {
-    lcd_set_cursor(sx, i);   
-    lcd_write_ram_prepare(); 
+    lcd_set_cursor(sx, i);
+    lcd_write_ram_prepare();
 
     for (j = 0; j < xlen; j++) {
-      LCD->LCD_RAM = color; 
+      LCD->LCD_RAM = color;
     }
   }
 }
-
 
 void lcd_color_fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey,
                     uint16_t* color) {
   uint16_t height, width;
   uint16_t i, j;
 
-  width = ex - sx + 1;  
-  height = ey - sy + 1; 
+  width = ex - sx + 1;
+  height = ey - sy + 1;
 
   for (i = 0; i < height; i++) {
-    lcd_set_cursor(sx, sy + i); 
-    lcd_write_ram_prepare();    
+    lcd_set_cursor(sx, sy + i);
+    lcd_write_ram_prepare();
 
     for (j = 0; j < width; j++) {
-      LCD->LCD_RAM = color[i * width + j]; 
+      LCD->LCD_RAM = color[i * width + j];
     }
   }
 }
-
 
 void lcd_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
                    uint16_t color) {
   uint16_t t;
   int xerr = 0, yerr = 0, delta_x, delta_y, distance;
   int incx, incy, row, col;
-  delta_x = x2 - x1; 
+  delta_x = x2 - x1;
   delta_y = y2 - y1;
   row = x1;
   col = y1;
 
   if (delta_x > 0) {
-    incx = 1; 
+    incx = 1;
   } else if (delta_x == 0) {
-    incx = 0; 
+    incx = 0;
   } else {
     incx = -1;
     delta_x = -delta_x;
@@ -762,21 +669,20 @@ void lcd_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
   if (delta_y > 0) {
     incy = 1;
   } else if (delta_y == 0) {
-    incy = 0; 
+    incy = 0;
   } else {
     incy = -1;
     delta_y = -delta_y;
   }
 
   if (delta_x > delta_y) {
-    distance = delta_x; 
+    distance = delta_x;
   } else {
     distance = delta_y;
   }
 
-  for (t = 0; t <= distance + 1; t++) 
-  {
-    lcd_draw_point(row, col, color); 
+  for (t = 0; t <= distance + 1; t++) {
+    lcd_draw_point(row, col, color);
     xerr += delta_x;
     yerr += delta_y;
 
@@ -792,7 +698,6 @@ void lcd_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
   }
 }
 
-
 void lcd_draw_hline(uint16_t x, uint16_t y, uint16_t len, uint16_t color) {
   if ((len == 0) || (x > lcddev.width) || (y > lcddev.height)) {
     return;
@@ -800,7 +705,6 @@ void lcd_draw_hline(uint16_t x, uint16_t y, uint16_t len, uint16_t color) {
 
   lcd_fill(x, y, x + len - 1, y, color);
 }
-
 
 void lcd_draw_rectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
                         uint16_t color) {
@@ -810,27 +714,25 @@ void lcd_draw_rectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
   lcd_draw_line(x2, y1, x2, y2, color);
 }
 
-
 void lcd_draw_circle(uint16_t x0, uint16_t y0, uint8_t r, uint16_t color) {
   int a, b;
   int di;
 
   a = 0;
   b = r;
-  di = 3 - (r << 1); 
+  di = 3 - (r << 1);
 
   while (a <= b) {
-    lcd_draw_point(x0 + a, y0 - b, color); 
-    lcd_draw_point(x0 + b, y0 - a, color); 
-    lcd_draw_point(x0 + b, y0 + a, color); 
-    lcd_draw_point(x0 + a, y0 + b, color); 
-    lcd_draw_point(x0 - a, y0 + b, color); 
+    lcd_draw_point(x0 + a, y0 - b, color);
+    lcd_draw_point(x0 + b, y0 - a, color);
+    lcd_draw_point(x0 + b, y0 + a, color);
+    lcd_draw_point(x0 + a, y0 + b, color);
+    lcd_draw_point(x0 - a, y0 + b, color);
     lcd_draw_point(x0 - b, y0 + a, color);
-    lcd_draw_point(x0 - a, y0 - b, color); 
-    lcd_draw_point(x0 - b, y0 - a, color); 
+    lcd_draw_point(x0 - a, y0 - b, color);
+    lcd_draw_point(x0 - b, y0 - a, color);
     a++;
 
-    
     if (di < 0) {
       di += 4 * a + 6;
     } else {
@@ -839,7 +741,6 @@ void lcd_draw_circle(uint16_t x0, uint16_t y0, uint8_t r, uint16_t color) {
     }
   }
 }
-
 
 void lcd_fill_circle(uint16_t x, uint16_t y, uint16_t r, uint16_t color) {
   uint32_t i;
@@ -851,7 +752,6 @@ void lcd_fill_circle(uint16_t x, uint16_t y, uint16_t r, uint16_t color) {
 
   for (i = 1; i <= imax; i++) {
     if ((i * i + xr * xr) > sqmax) {
-      
       if (xr > imax) {
         lcd_draw_hline(x - i + 1, y + xr, 2 * (i - 1), color);
         lcd_draw_hline(x - i + 1, y - xr, 2 * (i - 1), color);
@@ -860,12 +760,10 @@ void lcd_fill_circle(uint16_t x, uint16_t y, uint16_t r, uint16_t color) {
       xr--;
     }
 
-    
     lcd_draw_hline(x - xr, y + i, 2 * xr, color);
     lcd_draw_hline(x - xr, y - i, 2 * xr, color);
   }
 }
-
 
 void lcd_show_char(uint16_t x, uint16_t y, char chr, uint8_t size, uint8_t mode,
                    uint16_t color) {
@@ -874,25 +772,24 @@ void lcd_show_char(uint16_t x, uint16_t y, char chr, uint8_t size, uint8_t mode,
   uint8_t csize = 0;
   uint8_t* pfont = 0;
 
-  csize = (size / 8 + ((size % 8) ? 1 : 0)) *
-          (size / 2); 
-  chr = chr - ' '; 
+  csize = (size / 8 + ((size % 8) ? 1 : 0)) * (size / 2);
+  chr = chr - ' ';
 
   switch (size) {
     case 12:
-      pfont = (uint8_t*)asc2_1206[chr]; 
+      pfont = (uint8_t*)asc2_1206[chr];
       break;
 
     case 16:
-      pfont = (uint8_t*)asc2_1608[chr]; 
+      pfont = (uint8_t*)asc2_1608[chr];
       break;
 
     case 24:
-      pfont = (uint8_t*)asc2_2412[chr]; 
+      pfont = (uint8_t*)asc2_2412[chr];
       break;
 
     case 32:
-      pfont = (uint8_t*)asc2_3216[chr]; 
+      pfont = (uint8_t*)asc2_3216[chr];
       break;
 
     default:
@@ -900,31 +797,26 @@ void lcd_show_char(uint16_t x, uint16_t y, char chr, uint8_t size, uint8_t mode,
   }
 
   for (t = 0; t < csize; t++) {
-    temp = pfont[t]; 
+    temp = pfont[t];
 
-    for (t1 = 0; t1 < 8; t1++) 
-    {
-      if (temp & 0x80) 
-      {
-        lcd_draw_point(x, y, color); 
-      } else if (mode == 0)          
-      {
-        lcd_draw_point(
-            x, y, g_back_color); 
+    for (t1 = 0; t1 < 8; t1++) {
+      if (temp & 0x80) {
+        lcd_draw_point(x, y, color);
+      } else if (mode == 0) {
+        lcd_draw_point(x, y, g_back_color);
       }
 
-      temp <<= 1; 
+      temp <<= 1;
       y++;
 
-      if (y >= lcddev.height) return; 
+      if (y >= lcddev.height) return;
 
-      if ((y - y0) == size) 
-      {
-        y = y0; 
-        x++;    
+      if ((y - y0) == size) {
+        y = y0;
+        x++;
 
         if (x >= lcddev.width) {
-          return; 
+          return;
         }
 
         break;
@@ -932,7 +824,6 @@ void lcd_show_char(uint16_t x, uint16_t y, char chr, uint8_t size, uint8_t mode,
     }
   }
 }
-
 
 static uint32_t lcd_pow(uint8_t m, uint8_t n) {
   uint32_t result = 1;
@@ -944,64 +835,52 @@ static uint32_t lcd_pow(uint8_t m, uint8_t n) {
   return result;
 }
 
-
 void lcd_show_num(uint16_t x, uint16_t y, uint32_t num, uint8_t len,
                   uint8_t size, uint16_t color) {
   uint8_t t, temp;
   uint8_t enshow = 0;
 
-  for (t = 0; t < len; t++) 
-  {
-    temp = (num / lcd_pow(10, len - t - 1)) % 10; 
+  for (t = 0; t < len; t++) {
+    temp = (num / lcd_pow(10, len - t - 1)) % 10;
 
-    if (enshow == 0 && t < (len - 1)) 
-    {
+    if (enshow == 0 && t < (len - 1)) {
       if (temp == 0) {
-        lcd_show_char(x + (size / 2) * t, y, ' ', size, 0,
-                      color); 
-        continue;             
+        lcd_show_char(x + (size / 2) * t, y, ' ', size, 0, color);
+        continue;
       } else {
-        enshow = 1; 
+        enshow = 1;
       }
     }
 
-    lcd_show_char(x + (size / 2) * t, y, temp + '0', size, 0,
-                  color); 
+    lcd_show_char(x + (size / 2) * t, y, temp + '0', size, 0, color);
   }
 }
-
 
 void lcd_show_xnum(uint16_t x, uint16_t y, uint32_t num, uint8_t len,
                    uint8_t size, uint8_t mode, uint16_t color) {
   uint8_t t, temp;
   uint8_t enshow = 0;
 
-  for (t = 0; t < len; t++) 
-  {
-    temp = (num / lcd_pow(10, len - t - 1)) % 10; 
+  for (t = 0; t < len; t++) {
+    temp = (num / lcd_pow(10, len - t - 1)) % 10;
 
-    if (enshow == 0 && t < (len - 1)) 
-    {
+    if (enshow == 0 && t < (len - 1)) {
       if (temp == 0) {
-        if (mode & 0x80) 
-        {
-          lcd_show_char(x + (size / 2) * t, y, '0', size, mode & 0x01,
-                        color); 
+        if (mode & 0x80) {
+          lcd_show_char(x + (size / 2) * t, y, '0', size, mode & 0x01, color);
         } else {
-          lcd_show_char(x + (size / 2) * t, y, ' ', size, mode & 0x01,
-                        color); 
+          lcd_show_char(x + (size / 2) * t, y, ' ', size, mode & 0x01, color);
         }
 
         continue;
       } else {
-        enshow = 1; 
+        enshow = 1;
       }
     }
 
     lcd_show_char(x + (size / 2) * t, y, temp + '0', size, mode & 0x01, color);
   }
 }
-
 
 void lcd_show_string(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                      uint8_t size, char* p, uint16_t color) {
@@ -1010,15 +889,14 @@ void lcd_show_string(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
   width += x;
   height += y;
 
-  while ((*p <= '~') && (*p >= ' ')) 
-  {
+  while ((*p <= '~') && (*p >= ' ')) {
     if (x >= width) {
       x = x0;
       y += size;
     }
 
     if (y >= height) {
-      break; 
+      break;
     }
 
     lcd_show_char(x, y, *p, size, 1, color);
@@ -1079,7 +957,6 @@ void lcd_show_char_scaled(uint16_t x, uint16_t y, char chr, uint8_t size,
     }
   }
 }
-
 
 void lcd_show_string_scaled(uint16_t x, uint16_t y, char* p, uint8_t size,
                             uint8_t scale, uint16_t color) {
@@ -1156,7 +1033,6 @@ void lcd_show_char_scaled_bold(uint16_t x, uint16_t y, char chr, uint8_t size,
   }
 }
 
-
 void lcd_show_string_scaled_bold(uint16_t x, uint16_t y, char* p, uint8_t size,
                                  uint8_t scale, uint16_t color) {
   while ((*p <= '~') && (*p >= ' ')) {
@@ -1186,27 +1062,20 @@ static const uint16_t g_dash_lap_bg = 0x1A06;
 static const uint16_t g_dash_fuel_bar_color = 0xFFE0;
 static const uint16_t g_dash_shift_off_color = 0x3186;
 static const uint16_t g_dash_shift_cyan_color = BLUE;
-static const unsigned char g_dash_small_letter_l_mask
-    [SIMHEI_DIGIT_SMALL_WIDTH * SIMHEI_DIGIT_SMALL_HEIGHT] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
-        0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0};
+static const unsigned char
+    g_dash_small_letter_l_mask[SIMHEI_DIGIT_SMALL_WIDTH *
+                               SIMHEI_DIGIT_SMALL_HEIGHT] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0};
 
 static void lcd_draw_pressure_badge(void);
 static void lcd_draw_temp_badge(void);
@@ -1221,13 +1090,12 @@ static void lcd_draw_char_to_buf(uint16_t* buf, uint16_t buf_width,
                                  uint16_t buf_height, uint16_t x, uint16_t y,
                                  char chr, uint8_t size, uint16_t color);
 static void lcd_draw_string_to_buf(uint16_t* buf, uint16_t buf_width,
-                                   uint16_t buf_height, uint16_t x,
-                                   uint16_t y, const char* str, uint8_t size,
+                                   uint16_t buf_height, uint16_t x, uint16_t y,
+                                   const char* str, uint8_t size,
                                    uint16_t color);
 static void lcd_compose_vertical_bar_rect(uint16_t rect_width,
                                           uint16_t rect_height,
-                                          uint8_t fill_pct,
-                                          uint16_t fill_color,
+                                          uint8_t fill_pct, uint16_t fill_color,
                                           uint16_t bg_color, uint16_t* buf);
 
 static void lcd_fill_round_rect(uint16_t x1, uint16_t y1, uint16_t x2,
@@ -1307,14 +1175,12 @@ void lcd_draw_demo(void) {
 
   lcd_clear(BLACK);
 
-  
   lcd_fill_round_rect(0, 24, 107, 103, 5, panel_light_green);
   lcd_fill(108, 24, 211, 175, g_dash_center_bg);
   lcd_fill_round_rect(212, 24, 319, 103, 5, panel_light_blue);
   lcd_draw_round_frame(0, 104, 107, 175, 6, 3, line_blue, BLACK);
   lcd_draw_round_frame(212, 104, 319, 175, 6, 3, line_blue, panel_dark_green);
 
-  
   lcd_fill(6, 64, 101, 66, line_gray);
   lcd_fill(52, 29, 55, 100, line_gray);
   lcd_draw_pressure_badge();
@@ -1325,7 +1191,6 @@ void lcd_draw_demo(void) {
   lcd_fill(218, 173, 313, 175, line_blue);
   lcd_draw_temp_badge();
 
-  
   lcd_draw_open_round_frame(80, 176, 239, 239, 7, 3, line_green, BLACK, 1);
   lcd_fill(80, 183, 82, 239, line_green);
   lcd_fill(237, 183, 239, 239, line_green);
@@ -1490,9 +1355,9 @@ static void lcd_compose_bold_char_rect(uint16_t rect_width,
 }
 
 static void lcd_compose_bold_fuel_rect(uint16_t rect_width,
-                                       uint16_t rect_height, uint8_t fuel_liters,
-                                       uint16_t fg_color, uint16_t bg_color,
-                                       uint16_t* buf) {
+                                       uint16_t rect_height,
+                                       uint8_t fuel_liters, uint16_t fg_color,
+                                       uint16_t bg_color, uint16_t* buf) {
   char str[12];
   uint8_t len;
   uint16_t digits_width;
@@ -1686,14 +1551,11 @@ static void lcd_compose_bold_3digit_rect(uint16_t rect_width,
   }
 }
 
-static void lcd_draw_brake_temp_cell(uint16_t x, uint16_t y,
-                                         uint16_t width, uint16_t height,
-                                         int temp) {
-  lcd_compose_bold_3digit_rect(width, height, temp,
-                               SIMHEI_DIGIT_SMALL_WIDTH,
-                               SIMHEI_DIGIT_SMALL_HEIGHT, 0,
-                               g_dash_brake_temp_color, g_dash_brake_temp_bg,
-                               g_dash_rect_buf);
+static void lcd_draw_brake_temp_cell(uint16_t x, uint16_t y, uint16_t width,
+                                     uint16_t height, int temp) {
+  lcd_compose_bold_3digit_rect(
+      width, height, temp, SIMHEI_DIGIT_SMALL_WIDTH, SIMHEI_DIGIT_SMALL_HEIGHT,
+      0, g_dash_brake_temp_color, g_dash_brake_temp_bg, g_dash_rect_buf);
   lcd_blit_rgb565_rect(x, y, width, height, g_dash_rect_buf);
 }
 
@@ -1858,8 +1720,8 @@ static void lcd_draw_char_to_buf(uint16_t* buf, uint16_t buf_width,
 }
 
 static void lcd_draw_string_to_buf(uint16_t* buf, uint16_t buf_width,
-                                   uint16_t buf_height, uint16_t x,
-                                   uint16_t y, const char* str, uint8_t size,
+                                   uint16_t buf_height, uint16_t x, uint16_t y,
+                                   const char* str, uint8_t size,
                                    uint16_t color) {
   while (*str != '\0') {
     lcd_draw_char_to_buf(buf, buf_width, buf_height, x, y, *str, size, color);
@@ -1902,9 +1764,8 @@ static void lcd_fill_round_bar_to_buf(uint16_t* buf, uint16_t buf_width,
 static uint16_t lcd_get_shift_light_color(uint8_t index, uint16_t rpm_pct_x10) {
   static const uint16_t thresholds[10] = {865, 865, 884, 884, 902,
                                           902, 921, 921, 940, 940};
-  static const uint16_t colors[10] = {
-      0x07E0, 0x07E0, 0xFFE0, 0xFFE0, 0xF800,
-      0xF800, 0xF800, 0xF800, 0x07FF, 0x07FF};
+  static const uint16_t colors[10] = {0x07E0, 0x07E0, 0xFFE0, 0xFFE0, 0xF800,
+                                      0xF800, 0xF800, 0xF800, 0x07FF, 0x07FF};
 
   if (rpm_pct_x10 >= 940) {
     return g_dash_shift_cyan_color;
@@ -1919,8 +1780,7 @@ static uint16_t lcd_get_shift_light_color(uint8_t index, uint16_t rpm_pct_x10) {
 
 static void lcd_compose_vertical_bar_rect(uint16_t rect_width,
                                           uint16_t rect_height,
-                                          uint8_t fill_pct,
-                                          uint16_t fill_color,
+                                          uint8_t fill_pct, uint16_t fill_color,
                                           uint16_t bg_color, uint16_t* buf) {
   uint16_t fill_height;
   uint16_t x;
@@ -1972,13 +1832,11 @@ static void lcd_compose_bar_rect(uint16_t rect_width, uint16_t rect_height,
   }
 }
 
-static void lcd_draw_tire_temp_cell(uint16_t x, uint16_t y,
-                                        uint16_t width, uint16_t height,
-                                        int temp) {
+static void lcd_draw_tire_temp_cell(uint16_t x, uint16_t y, uint16_t width,
+                                    uint16_t height, int temp) {
   lcd_compose_bold_2digit_rect(width, height, temp, SIMHEI_DIGIT_SMALL_WIDTH,
-                               SIMHEI_DIGIT_SMALL_HEIGHT, 0,
-                               g_dash_tire_color, g_dash_tire_bg,
-                               g_dash_rect_buf);
+                               SIMHEI_DIGIT_SMALL_HEIGHT, 0, g_dash_tire_color,
+                               g_dash_tire_bg, g_dash_rect_buf);
   lcd_blit_rgb565_rect(x, y, width, height, g_dash_rect_buf);
 }
 
@@ -2003,8 +1861,8 @@ void dashboard_init_screen(void) {
   lcd_draw_pedals(0, 0);
 }
 
-void dashboard_update(const uart_telemetry_t *telemetry,
-                      dashboard_view_state_t *state) {
+void dashboard_update(const uart_telemetry_t* telemetry,
+                      dashboard_view_state_t* state) {
   if ((telemetry == NULL) || (state == NULL)) {
     return;
   }
@@ -2033,9 +1891,8 @@ void dashboard_update(const uart_telemetry_t *telemetry,
       ((int)telemetry->brake_temp_fr != state->brake_temp_fr) ||
       ((int)telemetry->brake_temp_rl != state->brake_temp_rl) ||
       ((int)telemetry->brake_temp_rr != state->brake_temp_rr)) {
-    lcd_draw_brake_temps(
-        telemetry->brake_temp_fl, telemetry->brake_temp_fr,
-        telemetry->brake_temp_rl, telemetry->brake_temp_rr);
+    lcd_draw_brake_temps(telemetry->brake_temp_fl, telemetry->brake_temp_fr,
+                         telemetry->brake_temp_rl, telemetry->brake_temp_rr);
     state->brake_temp_fl = telemetry->brake_temp_fl;
     state->brake_temp_fr = telemetry->brake_temp_fr;
     state->brake_temp_rl = telemetry->brake_temp_rl;
@@ -2047,7 +1904,7 @@ void dashboard_update(const uart_telemetry_t *telemetry,
       ((int)telemetry->tire_temp_rl != state->tire_temp_rl) ||
       ((int)telemetry->tire_temp_rr != state->tire_temp_rr)) {
     lcd_draw_tire_temps(telemetry->tire_temp_fl, telemetry->tire_temp_fr,
-                            telemetry->tire_temp_rl, telemetry->tire_temp_rr);
+                        telemetry->tire_temp_rl, telemetry->tire_temp_rr);
     state->tire_temp_fl = telemetry->tire_temp_fl;
     state->tire_temp_fr = telemetry->tire_temp_fr;
     state->tire_temp_rl = telemetry->tire_temp_rl;
@@ -2220,8 +2077,7 @@ void lcd_draw_fuel_status(uint8_t fuel_liters, uint8_t fuel_pct) {
   lcd_draw_string_to_buf(g_dash_rect_buf, pct_w, pct_h, 0, 0, pct_buf, 16,
                          WHITE);
   lcd_draw_string_to_buf(g_dash_rect_buf, pct_w, pct_h,
-                         (uint16_t)(pct_len * (16 / 2) + 2), 0, "%", 16,
-                         WHITE);
+                         (uint16_t)(pct_len * (16 / 2) + 2), 0, "%", 16, WHITE);
   lcd_blit_rgb565_rect(pct_x, pct_y, pct_w, pct_h, g_dash_rect_buf);
 }
 
@@ -2372,6 +2228,3 @@ void lcd_draw_bold_int_in_rect(uint16_t x, uint16_t y, uint16_t rect_width,
   lcd_draw_bold_number(draw_x, draw_y, buf, digit_width, digit_height, spacing,
                        color);
 }
-
-
-
