@@ -8,8 +8,12 @@
 
 #include "rF2_telemetry_plugin.hpp"
 
+#include <hidsdi.h>
 #include <math.h>
+#include <setupapi.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 namespace {
 
@@ -18,6 +22,11 @@ constexpr unsigned char kFrameHeader2 = 0x55;
 constexpr unsigned long kBaudRate = CBR_115200;
 constexpr unsigned long long kReconnectIntervalMs = 1000;
 constexpr char kSerialPortName[] = "\\\\.\\COM3";
+constexpr unsigned short kHidVendorId = 0x0483;
+constexpr unsigned short kHidProductId = 0x5750;
+constexpr unsigned char kHidTelemetryReportId = 0x01;
+constexpr size_t kTelemetryFrameSize = 35;
+constexpr size_t kHidReportSize = 64;
 
 unsigned char ClampGear(long gear) {
   if (gear < 0) {
@@ -265,7 +274,112 @@ void RF2TelemetryInternalsPlugin::TryReconnectSerial() {
   OpenSerialPort();
 }
 
-static void RF2TelemetrySendFrame(HANDLE serial_handle, unsigned char gear,
+void RF2TelemetryInternalsPlugin::OpenHidDevice() {
+  GUID hid_guid;
+  HDEVINFO device_info;
+  SP_DEVICE_INTERFACE_DATA interface_data = {};
+  char msg[256];
+  DWORD index = 0;
+
+  if (mHidHandle != INVALID_HANDLE_VALUE) {
+    return;
+  }
+
+  HidD_GetHidGuid(&hid_guid);
+  device_info = SetupDiGetClassDevsA(
+      &hid_guid, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+
+  if (device_info == INVALID_HANDLE_VALUE) {
+    if (!mHidErrorLogged) {
+      sprintf(msg, "HID device list failed, err=%lu", GetLastError());
+      WriteToLogFile("a", msg);
+      mHidErrorLogged = true;
+    }
+    return;
+  }
+
+  interface_data.cbSize = sizeof(interface_data);
+  while (SetupDiEnumDeviceInterfaces(device_info, NULL, &hid_guid, index,
+                                     &interface_data)) {
+    DWORD detail_size = 0;
+    PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail_data = NULL;
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    HIDD_ATTRIBUTES attributes = {};
+
+    SetupDiGetDeviceInterfaceDetailA(device_info, &interface_data, NULL, 0,
+                                     &detail_size, NULL);
+    detail_data = static_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_A>(
+        malloc(detail_size));
+    if (detail_data == NULL) {
+      break;
+    }
+
+    detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+    if (!SetupDiGetDeviceInterfaceDetailA(device_info, &interface_data,
+                                          detail_data, detail_size, NULL,
+                                          NULL)) {
+      free(detail_data);
+      index++;
+      continue;
+    }
+
+    handle = CreateFileA(detail_data->DevicePath, GENERIC_READ | GENERIC_WRITE,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    free(detail_data);
+
+    if (handle == INVALID_HANDLE_VALUE) {
+      index++;
+      continue;
+    }
+
+    attributes.Size = sizeof(attributes);
+    if (HidD_GetAttributes(handle, &attributes) &&
+        (attributes.VendorID == kHidVendorId) &&
+        (attributes.ProductID == kHidProductId)) {
+      mHidHandle = handle;
+      mHidErrorLogged = false;
+      WriteToLogFile("a", "HID telemetry device opened");
+      break;
+    }
+
+    CloseHandle(handle);
+    index++;
+  }
+
+  SetupDiDestroyDeviceInfoList(device_info);
+
+  if ((mHidHandle == INVALID_HANDLE_VALUE) && !mHidErrorLogged) {
+    sprintf(msg, "HID telemetry device not found, VID=%04X PID=%04X",
+            kHidVendorId, kHidProductId);
+    WriteToLogFile("a", msg);
+    mHidErrorLogged = true;
+  }
+}
+
+void RF2TelemetryInternalsPlugin::CloseHidDevice() {
+  if (mHidHandle != INVALID_HANDLE_VALUE) {
+    CloseHandle(mHidHandle);
+    mHidHandle = INVALID_HANDLE_VALUE;
+  }
+}
+
+void RF2TelemetryInternalsPlugin::TryReconnectHid() {
+  unsigned long long now = GetTickCount64();
+
+  if (mHidHandle != INVALID_HANDLE_VALUE) {
+    return;
+  }
+
+  if ((now - mLastReconnectTick) < kReconnectIntervalMs) {
+    return;
+  }
+
+  mLastReconnectTick = now;
+  OpenHidDevice();
+}
+
+static void RF2TelemetrySendFrame(HANDLE hid_handle, unsigned char gear,
                                   unsigned short speed, unsigned short rpm,
                                   unsigned char tire_temp_fl,
                                   unsigned char tire_temp_fr,
@@ -284,9 +398,10 @@ static void RF2TelemetrySendFrame(HANDLE serial_handle, unsigned char gear,
                                   unsigned char fuel_pct,
                                   unsigned char throttle_pct,
                                   unsigned char brake_pct,
-                                  bool* serial_error_logged) {
+                                  bool* hid_error_logged) {
   DWORD written = 0;
-  unsigned char frame[35];
+  unsigned char frame[kTelemetryFrameSize];
+  unsigned char report[kHidReportSize] = {};
   char msg[128];
 
   frame[0] = kFrameHeader1;
@@ -325,15 +440,18 @@ static void RF2TelemetrySendFrame(HANDLE serial_handle, unsigned char gear,
   frame[33] = throttle_pct;
   frame[34] = brake_pct;
 
-  if (!WriteFile(serial_handle, frame, sizeof(frame), &written, NULL) ||
-      (written != sizeof(frame))) {
-    sprintf(msg, "Serial write failed, err=%lu", GetLastError());
+  report[0] = kHidTelemetryReportId;
+  memcpy(&report[1], frame, sizeof(frame));
+
+  if (!WriteFile(hid_handle, report, sizeof(report), &written, NULL) ||
+      (written != sizeof(report))) {
+    sprintf(msg, "HID write failed, err=%lu", GetLastError());
     FILE* fo = fopen("LMU_Telemetry_Output.txt", "a");
     if (fo != NULL) {
       fprintf(fo, "%s\n", msg);
       fclose(fo);
     }
-    *serial_error_logged = true;
+    *hid_error_logged = true;
   }
 }
 
@@ -357,22 +475,22 @@ void RF2TelemetryInternalsPlugin::SendTelemetryFrame(unsigned char gear,
                                                      unsigned char fuel_pct,
                                                      unsigned char throttle_pct,
                                                      unsigned char brake_pct) {
-  TryReconnectSerial();
-  if (mSerialHandle == INVALID_HANDLE_VALUE) {
+  TryReconnectHid();
+  if (mHidHandle == INVALID_HANDLE_VALUE) {
     return;
   }
 
-  RF2TelemetrySendFrame(mSerialHandle, gear, speed, rpm, tire_temp_fl,
+  RF2TelemetrySendFrame(mHidHandle, gear, speed, rpm, tire_temp_fl,
                         tire_temp_fr, tire_temp_rl, tire_temp_rr,
                         brake_temp_fl, brake_temp_fr, brake_temp_rl,
                         brake_temp_rr, water_temp, oil_temp, best_lap_ms,
                         current_lap_ms, rpm_pct_x10, fuel_liters, fuel_pct,
                         throttle_pct, brake_pct,
-                        &mSerialErrorLogged);
+                        &mHidErrorLogged);
 
-  if (mSerialErrorLogged) {
-    WriteToLogFile("a", "Serial write failed");
-    CloseSerialPort();
+  if (mHidErrorLogged) {
+    WriteToLogFile("a", "HID write failed");
+    CloseHidDevice();
   }
 }
 
@@ -385,11 +503,14 @@ void RF2TelemetryInternalsPlugin::Startup(long version) {
   mET = 0.0;
   mLastReconnectTick = 0;
   mSerialErrorLogged = false;
-  OpenSerialPort();
+  mHidErrorLogged = false;
+  /* OpenSerialPort(); */
+  OpenHidDevice();
 }
 
 void RF2TelemetryInternalsPlugin::Shutdown() {
-  CloseSerialPort();
+  /* CloseSerialPort(); */
+  CloseHidDevice();
   WriteToLogFile("a", "-SHUTDOWN-");
 }
 

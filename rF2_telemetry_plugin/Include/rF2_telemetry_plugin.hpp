@@ -95,6 +95,9 @@ class RF2TelemetryInternalsPlugin
   void OpenSerialPort();
   void CloseSerialPort();
   void TryReconnectSerial();
+  void OpenHidDevice();
+  void CloseHidDevice();
+  void TryReconnectHid();
   void SendTelemetryFrame(unsigned char gear, unsigned short speed,
                           unsigned short rpm, unsigned char tire_temp_fl,
                           unsigned char tire_temp_fr,
@@ -116,8 +119,10 @@ class RF2TelemetryInternalsPlugin
   double mET;     // needed for the hardware example
   bool mEnabled;  // needed for the hardware example
   HANDLE mSerialHandle = INVALID_HANDLE_VALUE;
+  HANDLE mHidHandle = INVALID_HANDLE_VALUE;
   unsigned long long mLastReconnectTick = 0;
   bool mSerialErrorLogged = false;
+  bool mHidErrorLogged = false;
   unsigned long mBestLapMilliseconds = 0;
   unsigned long mCurrentLapMilliseconds = 0;
 };

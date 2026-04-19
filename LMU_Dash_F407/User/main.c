@@ -2,6 +2,7 @@
 #include "./SYSTEM/delay/delay.h"
 #include "./SYSTEM/sys/sys.h"
 #include "./SYSTEM/usart/usart.h"
+#include "usb_device.h"
 
 #define UART_POLL_INTERVAL_MS 8U
 
@@ -14,7 +15,8 @@ int main(void) {
   HAL_Init();
   sys_stm32_clock_init(336, 8, 2, 7);
   delay_init(168);
-  usart_init(115200);
+  /* usart_init(115200); */
+  usb_hid_init();
   lcd_init();
   dashboard_init_screen();
 
@@ -23,7 +25,7 @@ int main(void) {
 
     if ((now - last_uart_poll_ms) >= UART_POLL_INTERVAL_MS) {
       last_uart_poll_ms = now;
-      uart_telemetry_poll();
+      /* uart_telemetry_poll(); */
 
       if (uart_telemetry_fetch(&telemetry) != 0U) {
         dashboard_update(&telemetry, &view_state);

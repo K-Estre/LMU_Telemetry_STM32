@@ -22,6 +22,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
 #include "stm32f4xx_hal.h"
+
+extern PCD_HandleTypeDef hpcd;
 /** @addtogroup STM32F4xx_HAL_Examples
   * @{
   */
@@ -155,6 +157,11 @@ void SysTick_Handler(void)
 /*void PPP_IRQHandler(void)
 {
 }*/
+
+void OTG_FS_IRQHandler(void)
+{
+  HAL_PCD_IRQHandler(&hpcd);
+}
 
 
 /**
